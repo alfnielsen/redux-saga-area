@@ -13,7 +13,7 @@ and there by hold the code more clean.
 
 
 It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as posible. 
-> _You can create normal reducer is you need them_
+> _You can create normal reducers if you need them_
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
