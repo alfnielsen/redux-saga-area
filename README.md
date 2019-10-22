@@ -4,16 +4,16 @@
 
 **Short:** `Simplified strongly typed redux`
 
-When defining redux action and reducers with typescript, 
-you often need a lot of typing for interfaces to ensure that you can use your action, 
-action-creators and reducer with autocompletion ect.
+When defining redux actions and reducers with typescript, 
+you often need a lot of typing for interfaces to ensure that you can use your actions, 
+action-creators and reducers with autocompletion ect.
 
 redux-area tries to simplify creation of redux logic by hiding / calculating types,
-and there by hold the code more clean.
+and thereby holding the code more clean.
 
 
 It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as possible. 
-> _You can create normal reducers if you need them_
+> You can create normal reducers if you need them
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
