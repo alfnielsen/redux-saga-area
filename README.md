@@ -151,14 +151,14 @@ Redux-area uses the [immer](https://github.com/immerjs/immer) project as it's ba
 It recommended to always use `produce` instead of `reducer`.
 The `produce` uses [immer](https://github.com/immerjs/immer) to ensure immutable state,
 
-Using `reducer` will creates a normal redux reduce,
-and you need to ensure immutable state your self.
+Using `reducer` will creates a normal redux reducer,
+and you need to ensure immutable state yourself.
 
 You can still use `reducer` for the rare cases, where optimized reducer's are needed.
 
 ## Debug your producer
 
-The produce functionality from [immer](https://github.com/immerjs/immer) creates a Proxy object,
+The _produce_ functionality from [immer](https://github.com/immerjs/immer) creates a Proxy object,
 and you will not be able to console.log(draft) you draft state.
 
 In this case you can change the 'produce' to 'reducer' to create a normal reducer.
