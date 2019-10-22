@@ -1,13 +1,20 @@
 {
    "name": "redux-area",
-   "version": "0.0.1",
+   "version": "0.0.3",
    "description": "simplified strongly typed redux",
-   "main": "index.js",
+   "keywords": [
+      "redux",
+      "typescript"
+   ],
+   "publisher": "alfnielsen",
+   "main": "out/ReduxArea.js",
+   "types": "out/ReduxArea.d.ts",
    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
+      "build": "tsc --declaration"
    },
    "author": "",
    "license": "ISC",
+   "homepage": "https://github.com/alfnielsen/redux-area#readme",
    "dependencies": {
       "immer": "^4.0.1",
       "redux": "^4.0.4"
