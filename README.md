@@ -12,7 +12,7 @@ redux-area tries to simplify creation of redux logic by hiding / calculating typ
 and there by hold the code more clean.
 
 
-It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as posible. 
+It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as possible. 
 > _You can create normal reducers if you need them_
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
