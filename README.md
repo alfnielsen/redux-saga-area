@@ -165,32 +165,4 @@ In this case you can change the 'produce' to 'reducer' to create a normal reduce
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
 
-### Related project (Not published jet!)
-
-redux-area is maintained along side the npm module [react-redux-action-dispatcher](https://www.npmjs.com/package/react-redux-action-dispatcher).
-
-**Both project are 100% independent**
-
-[react-redux-action-dispatcher](https://www.npmjs.com/package/react-redux-action-dispatcher) transform an map of strongly typed redux areas into a map of strongly typed dispatch actions that can be used in a react hook:
-
-```ts
-import CreateReduxArea from 'redux-area'
-import CreateActionDispatchersMap from 'react-redux-action-dispatcher'
-(...)
-// This can now be
-export const useComponentActions = () => CreateActionDispatchersMap({
-   updateName
-})
-export const MyAreaRootReducer = area.rootReducer
-```
-Uses
-```tsx
-import { useComponentActions } from './MyArea'
-const Component = () => {
-   const { updateName } = useComponentActions()
-   updateName('NewName')
-   return (<div></div>)
-}
-```
-
 
