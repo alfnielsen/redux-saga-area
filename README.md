@@ -1,3 +1,56 @@
+# Redux-area
+
+## Description
+
+**Short:** `Simplified strongly typed redux`
+
+When defining redux action and reducers with typescript, 
+you often need a lot of typing for interfaces to ensure that you can use your action, 
+action-creators and reducer with autocompletion ect.
+
+redux-area tries to simplify creation of redux logic by hiding / calculating types,
+and there by hold the code more clean.
+
+
+It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as posible. 
+> _You can create normal reducer is you need them_
+
+Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
+
+## Example
+
+```ts
+import CreateReduxArea from 'redux-area'
+
+// State
+export interface IMyAreaState {
+   name: string
+}
+// InitialState
+const area = CreateReduxArea<IMyAreaState>({
+   name: ''
+})
+// Add action
+const updateName = area
+   .add('MY_AREA_UPDATE_NAME')
+   .action((name: string) => ({
+      name
+   }))
+   .produce((draft, { name }) => {
+      draft.name = name
+   })
+
+// Export Redux actions
+export const MyAreaActions = {
+   updateName
+}
+// Export initial state for area
+export const MyAreaInitState = area.initialState
+// Export root-reducer for area
+export const MyAreaRootReducer = area.rootReducer
+```
+
+
 ## Install
 
 ```sh
@@ -12,13 +65,13 @@ yarn add redux-area
 
 ## Usage
 
-### 1 Define an area
+### 1) Define an area
 
 Create an interface that describe the initial state for the redux area
 then create it with the default values:
 
 ```ts
-import CreateReduxArea from './ReduxArea'
+import CreateReduxArea from 'redux-area'
 
 interface IMyAreaState {
    name: string
@@ -29,7 +82,7 @@ const area = CreateReduxArea<IMyAreaState>({
 })
 ```
 
-### 2 Add Actions
+### 2) Add Actions
 
 You can now add actions to the area:
 
@@ -46,10 +99,11 @@ const updateName = area
 
 redux-area will use typescripts generic `ReturnType` and `Parameters` to
 determent how the actions is by extracting the return from the actionCreator.
+The type defined in `add` will automatically be added.
 
 In this case the actual action will be defined as: `{ type: string, name: string}`
 
-### 3 Export area (Actions, Names, Reducers and AreaRootReducer)
+### 3) Export area (Actions, Names, Reducers and AreaRootReducer)
 
 How you want to export the actionCreators is up to you and your team.
 
@@ -70,8 +124,6 @@ export const MyAreaActions = {
 }
 ```
 
-> _NOTE:_ If you using React, consider exporting an actionDispatcherMap by using the [react-redux-action-dispatcher](url will come) package
-
 Each action has added two properties: `name` and `reducer`
 
 If your using Saga's or other types of reducer/elements that need the action name,
@@ -90,47 +142,19 @@ export const MyAreaInitState = area.initialState
 export const MyAreaRootReducer = area.rootReducer
 ```
 
-## Full Example
-
-```ts
-import CreateReduxArea from './ReduxArea'
-
-export interface IMyAreaState {
-   name: string
-}
-const area = CreateReduxArea<IMyAreaState>({
-   name: ''
-})
-
-const updateName = area
-   .add('MY_AREA_UPDATE_NAME')
-   .action((name: string) => ({
-      name
-   }))
-   .produce((draft, { name }) => {
-      draft.name = name
-   })
-
-// Export Redux area
-export const MyAreaActions = {
-   updateName
-}
-export const MyAreaInitState = area.initialState
-export const MyAreaRootReducer = area.rootReducer
-```
-
 ## Immer
 
-Redux-area uses the [immer](https://github.com/immerjs/immer) project as is base for creating simplified reducers.
+Redux-area uses the [immer](https://github.com/immerjs/immer) project as it's base for creating simplified reducers.
 
 ## produce vs reducer
 
-It recommended to always use 'produce' instead of 'reducer'.
-The 'produce' uses [immer](https://github.com/immerjs/immer) to ensure immutable state,
-Using 'reducer' will creates a normal redux reduce,
+It recommended to always use `produce` instead of `reducer`.
+The `produce` uses [immer](https://github.com/immerjs/immer) to ensure immutable state,
+
+Using `reducer` will creates a normal redux reduce,
 and you need to ensure immutable state your self.
 
-You can still use 'reducer' for rare case super optimized reducer if your project need it.
+You can still use `reducer` for the rare cases, where optimized reducer's is needed.
 
 ## Debug your producer
 
