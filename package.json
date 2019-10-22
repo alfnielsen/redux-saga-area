@@ -1,0 +1,15 @@
+{
+   "name": "redux-area",
+   "version": "0.0.1",
+   "description": "simplified strongly typed redux",
+   "main": "index.js",
+   "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+   },
+   "author": "",
+   "license": "ISC",
+   "dependencies": {
+      "immer": "^4.0.1",
+      "redux": "^4.0.4"
+   }
+}
