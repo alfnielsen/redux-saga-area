@@ -165,7 +165,7 @@ In this case you can change the 'produce' to 'reducer' to create a normal reduce
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
 
-## Related project
+### Related project (Not published jet!)
 
 redux-area is maintained along side the npm module [react-redux-action-dispatcher](https://www.npmjs.com/package/react-redux-action-dispatcher).
 
@@ -175,7 +175,7 @@ redux-area is maintained along side the npm module [react-redux-action-dispatche
 
 ```ts
 import CreateReduxArea from 'redux-area'
-import CreateReduxArea from 'react-redux-action-disapther'
+import CreateActionDispatchersMap from 'react-redux-action-dispatcher'
 (...)
 // This can now be
 export const useComponentActions = () => CreateActionDispatchersMap({
@@ -192,4 +192,5 @@ const Component = () => {
    return (<div></div>)
 }
 ```
+
 
