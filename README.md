@@ -154,7 +154,7 @@ The `produce` uses [immer](https://github.com/immerjs/immer) to ensure immutable
 Using `reducer` will creates a normal redux reduce,
 and you need to ensure immutable state your self.
 
-You can still use `reducer` for the rare cases, where optimized reducer's is needed.
+You can still use `reducer` for the rare cases, where optimized reducer's are needed.
 
 ## Debug your producer
 
@@ -165,10 +165,31 @@ In this case you can change the 'produce' to 'reducer' to create a normal reduce
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
 
-## Recommended to React Projects
+## Related project
 
-This redux-area is maintained along side the npm package react-dispatch-action.
+redux-area is maintained along side the npm module [react-redux-action-dispatcher](https://www.npmjs.com/package/react-redux-action-dispatcher).
 
-Both project are 100% independent, but the author recommended to use both on react projects.
-react-dispatch-action transform an map of strongly typed redux areas
-into a map of strongly typed dispatch actions.
+**Both project are 100% independent**
+
+[react-redux-action-dispatcher](https://www.npmjs.com/package/react-redux-action-dispatcher) transform an map of strongly typed redux areas into a map of strongly typed dispatch actions that can be used in a react hook:
+
+```ts
+import CreateReduxArea from 'redux-area'
+import CreateReduxArea from 'react-redux-action-disapther'
+(...)
+// This can now be
+export const useComponentActions = () => CreateActionDispatchersMap({
+   updateName
+})
+export const MyAreaRootReducer = area.rootReducer
+```
+Uses
+```tsx
+import { useComponentActions } from './MyArea'
+const Component = () => {
+   const { updateName } = useComponentActions()
+   updateName('NewName')
+   return (<div></div>)
+}
+```
+
