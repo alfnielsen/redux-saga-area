@@ -17,6 +17,8 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
+Demo: [Demo in React](https://codesandbox.io/s/hardcore-snow-jql32?fontsize=14) _(editable codesandbox.io)_
+
 ## Example
 
 MyArea.ts
@@ -181,7 +183,7 @@ Redux-area uses the [immer](https://github.com/immerjs/immer) project as it's ba
 
 ## produce vs reducer
 
-It recommended to always use `produce` instead of `reducer`.
+Its recommended to always use `produce` instead of `reducer`.
 The `produce` uses [immer](https://github.com/immerjs/immer) to ensure immutable state,
 
 Using `reducer` will creates a normal redux reducer,
