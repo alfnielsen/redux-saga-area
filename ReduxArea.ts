@@ -44,7 +44,7 @@ const CreateReduxArea = <TState>(initialState: TState) => {
             }
          }
       }),
-      rootReducer: () => (
+      rootReducer: (
          state: TState = initialState,
          action: AnyAction
       ): TState => {

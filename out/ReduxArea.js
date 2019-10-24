@@ -32,7 +32,7 @@ const CreateReduxArea = (initialState) => {
                 };
             }
         }),
-        rootReducer: () => (state = initialState, action) => {
+        rootReducer: (state = initialState, action) => {
             const actionArea = actions.find(x => x.name === action.type);
             if (actionArea) {
                 return actionArea.reducer(state, action);

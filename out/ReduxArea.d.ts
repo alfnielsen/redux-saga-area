@@ -29,7 +29,7 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
             };
         };
     };
-    rootReducer: () => (state: TState | undefined, action: AnyAction) => TState;
+    rootReducer: (state: TState | undefined, action: AnyAction) => TState;
     actions: ReduxAction[];
     initialState: TState;
 };

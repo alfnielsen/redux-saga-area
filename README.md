@@ -4,20 +4,22 @@
 
 **Short:** `Simplified strongly typed redux`
 
-When defining redux actions and reducers with typescript, 
-you often need a lot of typing for interfaces to ensure that you can use your actions, 
+When defining redux actions and reducers with typescript,
+you often need a lot of typing for interfaces to ensure that you can use your actions,
 action-creators and reducers with autocompletion ect.
 
 redux-area tries to simplify creation of redux logic by hiding / calculating types,
 and thereby holding the code more clean.
 
+It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as possible.
 
-It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the reducers as simple as possible. 
 > You can create normal reducers if you need them
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
 ## Example
+
+MyArea.ts
 
 ```ts
 import CreateReduxArea from 'redux-area'
@@ -50,6 +52,35 @@ export const MyAreaInitState = area.initialState
 export const MyAreaRootReducer = area.rootReducer
 ```
 
+createStore.ts
+
+```ts
+import { createStore, combineReducers } from 'redux'
+import { MyAreaRootReducer, IMyAreaState } from './MyArea.ts'
+import { OtherAreaReducer, IOtherAreaState } from './OtherAreaReducer.ts'
+
+// Optional create full interface for entire store:
+export interface StoreState {
+   myAreaRootReducer: IMyAreaState
+   otherAreaState: IOtherAreaState
+}
+
+// Combined different areas into the store root reducer
+const rootReducer = combineReducers({
+   myAreaRootReducer: ComponentReducers,
+   otherAreaReducer: ComponentReducers
+})
+
+// Normal redux store setup
+const configureStore = () => {
+   const newStore = createStore(
+      rootReducer,
+      composeWithDevTools()
+      //applyMiddleware(...middleware),
+   )
+   return newStore
+}
+```
 
 ## Install
 
@@ -164,5 +195,3 @@ and you will not be able to console.log(draft) you draft state.
 In this case you can change the 'produce' to 'reducer' to create a normal reducer.
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
-
-
