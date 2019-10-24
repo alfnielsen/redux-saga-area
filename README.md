@@ -52,30 +52,32 @@ export const MyAreaInitState = area.initialState
 export const MyAreaRootReducer = area.rootReducer
 ```
 
-createStore.ts
+configureStore.ts
 
 ```ts
 import { createStore, combineReducers } from 'redux'
 import { MyAreaRootReducer, IMyAreaState } from './MyArea.ts'
-import { OtherAreaReducer, IOtherAreaState } from './OtherAreaReducer.ts'
+import { OtherAreaRootReducer, IOtherAreaState } from './OtherAreaReducer.ts'
+// import { composeWithDevTools } from 'redux-devtools-extension/developmentOnly' // <-- Add for Dev Extention
+
 
 // Optional create full interface for entire store:
 export interface StoreState {
-   myAreaRootReducer: IMyAreaState
-   otherAreaState: IOtherAreaState
+   myArea: IMyAreaState
+   otherArea: IOtherAreaState
 }
 
 // Combined different areas into the store root reducer
 const rootReducer = combineReducers({
-   myAreaRootReducer: ComponentReducers,
-   otherAreaReducer: ComponentReducers
+   myArea: MyAreaRootReducer,
+   otherArea: OtherAreaRootReducer
 })
 
 // Normal redux store setup
 const configureStore = () => {
    const newStore = createStore(
       rootReducer,
-      composeWithDevTools()
+      // composeWithDevTools() // <-- Add for Dev Extention
       //applyMiddleware(...middleware),
    )
    return newStore
