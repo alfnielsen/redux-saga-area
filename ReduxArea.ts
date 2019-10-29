@@ -17,6 +17,7 @@ const CreateReduxArea = <TState>(initialState: TState) => {
             const mappedAction = actionCreator as unknown as ((...args: Parameters<typeof action>) => ActionType) & {
                name: string,
                reducer: Reducer<TState, ActionType>
+               type: ActionType
             }
             Object.defineProperty(mappedAction, 'name', {
                value: name,

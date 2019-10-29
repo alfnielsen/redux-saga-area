@@ -1,3 +1,7 @@
+## 0.0.7
+
+Add action.type for type definition to use in custom Saga's Reducer ect.
+
 ## 0.0.6
 
 Update README with link to editable Demo on sandbox.io

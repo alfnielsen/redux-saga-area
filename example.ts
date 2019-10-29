@@ -16,10 +16,13 @@ const updateName = area
       draft.name = name
    })
 
+export type UpdateNameType = typeof updateName.type
+
 // Export Redux area
 export const MyAreaActions = {
    updateName
 }
+
 export const MyAreaInitState = area.initialState
 export const MyAreaRootReducer = area.rootReducer
 
