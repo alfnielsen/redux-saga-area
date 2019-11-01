@@ -1,19 +1,20 @@
+import { Draft, Immutable } from "immer";
 import { AnyAction, Reducer } from 'redux';
 declare type Func = (...args: any) => any;
 declare type ReduxAction = ((...args: any) => AnyAction) & {
     name: string;
     reducer: Reducer;
 };
-declare const CreateReduxArea: <TState>(initialState: TState) => {
+declare const CreateReduxArea: <TState, D = Draft<TState>>(initialState: TState) => {
     add: (name: string) => {
         action: <T extends Func>(action: T) => {
-            produce: (producer: (draft: TState, action: ReturnType<T> & {
+            produce: (producer: (draft: Draft<TState>, action: ReturnType<T> & {
                 type: string;
             }) => void) => ((...args: Parameters<T>) => ReturnType<T> & {
                 type: string;
             }) & {
                 name: string;
-                reducer: Reducer<TState, ReturnType<T> & {
+                reducer: Reducer<Immutable<TState>, ReturnType<T> & {
                     type: string;
                 }>;
                 type: ReturnType<T> & {
@@ -26,7 +27,7 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
                 type: string;
             }) & {
                 name: string;
-                reducer: Reducer<TState, ReturnType<T> & {
+                reducer: Reducer<Immutable<TState>, ReturnType<T> & {
                     type: string;
                 }>;
                 type: ReturnType<T> & {
