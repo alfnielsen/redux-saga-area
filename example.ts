@@ -1,9 +1,12 @@
 import CreateReduxArea from "./ReduxArea"
 
+// Optional state interface.
+// You can also get it from (typeof area.initialState)
 export interface IMyAreaState {
-   name: string
+   readonly name: string
 }
-const area = CreateReduxArea<IMyAreaState>({
+
+const area = CreateReduxArea({
    name: ''
 })
 
@@ -12,7 +15,7 @@ const updateName = area
    .action((name: string) => ({
       name
    }))
-   .produce((draft, { name }) => {
+   .produce((draft, { name, type }) => {
       draft.name = name
    })
 

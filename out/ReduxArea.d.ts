@@ -16,6 +16,9 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
                 reducer: Reducer<TState, ReturnType<T> & {
                     type: string;
                 }>;
+                type: ReturnType<T> & {
+                    type: string;
+                };
             };
             reducer: (reducer: (state: TState, reducerAction: ReturnType<T> & {
                 type: string;
@@ -26,6 +29,9 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
                 reducer: Reducer<TState, ReturnType<T> & {
                     type: string;
                 }>;
+                type: ReturnType<T> & {
+                    type: string;
+                };
             };
         };
     };

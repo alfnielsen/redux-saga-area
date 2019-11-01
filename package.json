@@ -1,6 +1,6 @@
 {
    "name": "redux-area",
-   "version": "0.0.7",
+   "version": "0.0.9",
    "description": "simplified strongly typed redux",
    "keywords": [
       "redux",
