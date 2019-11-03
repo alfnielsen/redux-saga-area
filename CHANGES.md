@@ -1,3 +1,7 @@
+## 0.0.11
+
+Update immer to version 5.0.0
+
 ## 0.0.9-0.0.10
 
 Fix problem with readonly typescript and immer produce.
