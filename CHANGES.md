@@ -1,3 +1,11 @@
+## 0.1.0
+
+Change d.ts a little for cleanier view: It will now AreaAction aith initial state and the definition for the action creator.
+
+Added addFetch
+
+Added area.options with: 'namePrefix' and 'fetchPostfix'
+
 ## 0.0.11
 
 Update immer to version 5.0.0

@@ -26,15 +26,25 @@ MyArea.ts
 ```ts
 import CreateReduxArea from 'redux-area'
 
-// State
+// State (Optional)
 export interface IMyAreaState {
-   name: string
+   name: string,
+   loading: boolean
+   error?: Error
 }
 // InitialState
 const area = CreateReduxArea<IMyAreaState>({
    name: ''
+   loading: false
 })
-// Add action
+
+// Change options for area (Optional)
+area.options({
+   namePrefix: '@@MyApp/MyArea/',
+   fetchPostfix: ['Fetch', 'Success', 'Failure']
+})
+
+// Add single action
 const updateName = area
    .add('MY_AREA_UPDATE_NAME')
    .action((name: string) => ({
@@ -44,9 +54,38 @@ const updateName = area
       draft.name = name
    })
 
+// Add single empty action (action has only a type and no other values)
+const clearName = area
+   .add('MY_AREA_CLEAR_NAME')
+   .produce(draft => {
+      draft.name = ''
+   })
+
+// Add fetch action (3 actions)
+const getName = area
+   .addFetch('MY_AREA_GET_NAME')
+   .action((id: number) => ({ id }))
+   .produce(draft => {
+      draft.loading = true
+   })
+   .successAction((name: string) => ({ name }))
+   .successProduce((draft, { name }) => {
+      draft.name = name
+      draft.loading = false
+   })
+   .failureAction((error: Error) => ({ error }))
+   .failureProduce((draft, { error }) => {
+      draft.loading = false
+      draft.error = error
+   })
+
 // Export Redux actions
 export const MyAreaActions = {
-   updateName
+   updateName,
+   clearName,
+   getNameFetch: getName.fetch,
+   getNameSuccess: getName.success,
+   getNameFailure: getName.failure
 }
 // You can get the action type definition for Saga custom reducers ect. like this:
 type UpdateNameActionType = typeof updateName.type
@@ -57,7 +96,7 @@ export const MyAreaInitState = area.initialState
 export const MyAreaRootReducer = area.rootReducer
 ```
 
-configureStore.ts
+configureStore.ts (The same as normal redux)
 
 ```ts
 import { createStore, combineReducers } from 'redux'
@@ -119,6 +158,25 @@ const area = CreateReduxArea<IMyAreaState>({
 })
 ```
 
+### 1.2) Optional options
+
+**namePrefix** Prefix all names in `add` and `addFetch` _(Default: '')_
+
+**fetchPostfix** Postfix the 3 action created with `addFetch` _(Default: ['Fetch', 'Success', 'Failure'])_
+
+```ts
+import CreateReduxArea from 'redux-area'
+
+interface IMyAreaState {
+   name: string
+}
+
+area.options({
+   namePrefix: '@@MyApp/MyArea/',
+   fetchPostfix: ['Fetch', 'Success', 'Failure']
+})
+```
+
 ### 2) Add Actions
 
 You can now add actions to the area:
@@ -139,6 +197,33 @@ determent how the actions is by extracting the return from the actionCreator.
 The type defined in `add` will automatically be added.
 
 In this case the actual action will be defined as: `{ type: string, name: string}`
+
+### 2.2) Add Fetch Actions
+
+You can also add a fetch actions to the area:
+
+It will create three action-creators and three reducers.
+
+The name (action type) wil be the name in `addFetch` postfix with 'Fetch', 'Success' and 'Failure'. _(Can be changed in area options)_
+
+```ts
+const getName = area
+   .addFetch('MY_AREA_GET_NAME')
+   .action((id: number) => ({ id }))
+   .produce(draft => {
+      draft.loading = true
+   })
+   .successAction((name: string) => ({ name }))
+   .successProduce((draft, { name }) => {
+      draft.name = name
+      draft.loading = false
+   })
+   .failureAction((error: Error) => ({ error }))
+   .failureProduce((draft, { error }) => {
+      draft.loading = false
+      draft.error = error
+   })
+```
 
 ### 3) Export area (Actions, Names, Reducers and AreaRootReducer)
 
@@ -161,7 +246,7 @@ export const MyAreaActions = {
 }
 ```
 
-Each action has added two properties: `name` and `reducer`
+Each action has added two properties: `name` and `reducer` (and a type props for easy 'typeof' use)
 
 If your using Saga's or other types of reducer/elements that need the action name,
 you can get them by the _name_ property and you can get the type definition with the _type_ property:
@@ -173,7 +258,9 @@ const reducer = updateName.reducer // => the reducer method
 type ActionType = typeof updateName.type // => undefined (Only for type definition)
 ```
 
-An area contains three properties: `rootReducer`, `actions` and `initialState`
+An area contains five properties: `rootReducer`, `initialState`, `actions`, `namePrefix` and `fetchPostfix`
+
+Normally it's only 'rootReducer' and maybe 'initialState' that is used.
 
 ```ts
 export const MyAreaInitState = area.initialState
