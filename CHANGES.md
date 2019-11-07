@@ -6,6 +6,8 @@ Added addFetch
 
 Added area.options with: 'namePrefix' and 'fetchPostfix'
 
+Added optional omitting the action for actions that only has 'type'
+
 ## 0.0.11
 
 Update immer to version 5.0.0
