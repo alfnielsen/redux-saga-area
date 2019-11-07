@@ -19,11 +19,18 @@ const updateName = area
       draft.name = name
    })
 
+const clearName = area
+   .add('MY_AREA_CLEAR_NAME')
+   .produce((draft, { type }) => {
+      draft.name = undefined
+   })
+
 export type UpdateNameType = typeof updateName.type
 
 // Export Redux area
 export const MyAreaActions = {
-   updateName
+   updateName,
+   clearName
 }
 
 export const MyAreaInitState = area.initialState

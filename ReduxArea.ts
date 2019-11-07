@@ -8,8 +8,37 @@ const CreateReduxArea = <TState, D = Draft<TState>>(initialState: TState) => {
    const actions: ReduxAction[] = []
    return {
       add: (name: string) => ({
+         produce: (producer: (draft: Draft<TState>, action: { type: string }) => void) => {
+            const actionCreator = () => ({ type: name })
+            const mappedAction = actionCreator as unknown as (() => { type: string }) & {
+               name: string,
+               reducer: Reducer<Immutable<TState>, { type: string }>
+               type: { type: string }
+            }
+            Object.defineProperty(mappedAction, 'reducer', {
+               value: produce(producer) as Reducer<Immutable<TState>, { type: string }>,
+               writable: false
+            })
+            actions.push(mappedAction as unknown as ReduxAction)
+            return mappedAction;
+         },
+         reducer: (
+            reducer: (state: TState, reducerAction: { type: string }) => any | void
+         ) => {
+            const actionCreator = () => ({ type: name })
+            const mappedAction = actionCreator as unknown as (() => { type: string }) & {
+               name: string,
+               reducer: Reducer<Immutable<TState>, { type: string }>
+               type: { type: string }
+            }
+            Object.defineProperty(mappedAction, 'reducer', {
+               value: reducer as Reducer<TState, { type: string }>,
+               writable: false
+            })
+            actions.push(mappedAction as unknown as ReduxAction)
+            return mappedAction;
+         },
          action: <T extends Func>(action: T) => {
-            type ActionType = ReturnType<T> & { type: string }
             const actionCreator = (...args: Parameters<typeof action>) => ({
                ...action.apply(null, args),
                type: name
