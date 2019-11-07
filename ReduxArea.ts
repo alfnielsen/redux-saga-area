@@ -136,44 +136,48 @@ const CreateReduxArea = <TState>(initialState: TState) => {
             }
          }
       }),
-      addFetch: (name: string) => ({
-         action: <TFetchAction extends Func>(action: TFetchAction) => {
-            let mappedAction = actionMethod<TState, TFetchAction>(area.namePrefix + name + area.fetchPostfix[0], action)
-            return {
-               produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & { type: string }) => void) => {
-                  mappedAction = produceMethod(mappedAction, producer)
-                  actions.push(mappedAction as unknown as ReduxAction)
-                  return {
-                     successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
-                        let mappedSuccessAction = actionMethod<TState, TSuccessAction>(area.namePrefix + name + area.fetchPostfix[1], successAction)
-                        return {
-                           successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & { type: string }) => void) => {
-                              mappedSuccessAction = produceMethod(mappedSuccessAction, successProducer)
-                              actions.push(mappedSuccessAction as unknown as ReduxAction)
-                              return {
-                                 failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
-                                    let mappedFailureAction = actionMethod<TState, TFailureAction>(area.namePrefix + name + area.fetchPostfix[2], failureAction)
-                                    return {
-                                       failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & { type: string }) => void) => {
-                                          mappedFailureAction = produceMethod(mappedFailureAction, failureProducer)
-                                          actions.push(mappedSuccessAction as unknown as ReduxAction)
-                                          return {
-                                             fetch: mappedAction,
-                                             success: mappedSuccessAction,
-                                             failure: mappedFailureAction
-                                          };
+      addFetch: (name: string) => {
+         const addFetchObject = {
+            produce: (producer: (draft: Draft<TState>, action: { type: string }) => void): any => { addFetchObject.action(() => { }).produce(producer) },
+            action: <TFetchAction extends Func>(action: TFetchAction) => {
+               let mappedAction = actionMethod<TState, TFetchAction>(area.namePrefix + name + area.fetchPostfix[0], action)
+               return {
+                  produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & { type: string }) => void) => {
+                     mappedAction = produceMethod(mappedAction, producer)
+                     actions.push(mappedAction as unknown as ReduxAction)
+                     return {
+                        successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
+                           let mappedSuccessAction = actionMethod<TState, TSuccessAction>(area.namePrefix + name + area.fetchPostfix[1], successAction)
+                           return {
+                              successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & { type: string }) => void) => {
+                                 mappedSuccessAction = produceMethod(mappedSuccessAction, successProducer)
+                                 actions.push(mappedSuccessAction as unknown as ReduxAction)
+                                 return {
+                                    failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
+                                       let mappedFailureAction = actionMethod<TState, TFailureAction>(area.namePrefix + name + area.fetchPostfix[2], failureAction)
+                                       return {
+                                          failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & { type: string }) => void) => {
+                                             mappedFailureAction = produceMethod(mappedFailureAction, failureProducer)
+                                             actions.push(mappedFailureAction as unknown as ReduxAction)
+                                             return {
+                                                fetch: mappedAction,
+                                                success: mappedSuccessAction,
+                                                failure: mappedFailureAction
+                                             };
+                                          }
                                        }
                                     }
-                                 }
-                              };
+                                 };
+                              }
                            }
                         }
-                     }
-                  };
+                     };
+                  }
                }
             }
          }
-      }),
+         return addFetchObject
+      },
       rootReducer: (
          state: TState = initialState,
          action: AnyAction

@@ -49,6 +49,24 @@ const getName = area
       draft.error = error
    })
 
+const getAllTypes = area
+   .addFetch('GetTypes')
+   .action((id: number) => ({ id }))
+   .produce((draft) => {
+      draft.loading = true
+   })
+   .successAction((name: string) => ({ name }))
+   .successProduce((draft, { name }) => {
+      draft.name = name
+      draft.loading = false
+   })
+   .failureAction((error: Error) => ({ error }))
+   .failureProduce((draft, { error }) => {
+      draft.loading = false
+      draft.error = error
+   })
+
+
 export type UpdateNameType = typeof updateName.type
 
 // Export Redux area
