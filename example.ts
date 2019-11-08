@@ -14,11 +14,11 @@ const area = CreateReduxArea<IMyAreaState>({
 })
 area.options({
    namePrefix: '@@MyApp/MyArea/',
-   fetchPostfix: ['Fetch', 'Success', 'Failure']
+   fetchPostfix: ['Request', 'Success', 'Failure']
 })
 
 const updateName = area
-   .add('MY_AREA_UPDATE_NAME')
+   .add('updateName')
    .action((name: string) => ({
       name
    }))
@@ -27,13 +27,13 @@ const updateName = area
    })
 
 const clearName = area
-   .add('MY_AREA_CLEAR_NAME')
+   .add('clearName')
    .produce((draft) => {
       draft.name = undefined
    })
 
 const getName = area
-   .addFetch('MY_AREA_GET_NAME')
+   .addFetch('getName')
    .action((id: number) => ({ id }))
    .produce((draft) => {
       draft.loading = true
@@ -50,7 +50,7 @@ const getName = area
    })
 
 const getAllTypes = area
-   .addFetch('GetTypes')
+   .addFetch('getAllTypes')
    .action((id: number) => ({ id }))
    .produce((draft) => {
       draft.loading = true
@@ -73,7 +73,7 @@ export type UpdateNameType = typeof updateName.type
 export const MyAreaActions = {
    updateName,
    clearName,
-   getNameRequest: getName.request,
+   getNameFetch: getName.request,
    getNameSuccess: getName.success,
    getNameFailure: getName.failure
 }

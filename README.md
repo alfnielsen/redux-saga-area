@@ -54,8 +54,8 @@ const updateName = area
    })
 
 // Add single empty action (action has only a type and no other values)
-const updateName = area
-   .add('updateName')
+const clearName = area
+   .add('clearName')
    .produce(draft => {
       draft.name = ''
    })
