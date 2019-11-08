@@ -62,6 +62,9 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
         };
     };
     addFetch: (name: string) => {
+        produce: (producer: (draft: Draft<TState>, action: {
+            type: string;
+        }) => void) => any;
         action: <TFetchAction extends Func>(action: TFetchAction) => {
             produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & {
                 type: string;
@@ -74,7 +77,7 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
                             failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & {
                                 type: string;
                             }) => void) => {
-                                fetch: AreaAction<TState, TFetchAction>;
+                                request: AreaAction<TState, TFetchAction>;
                                 success: AreaAction<TState, TSuccessAction>;
                                 failure: AreaAction<TState, TFailureAction>;
                             };

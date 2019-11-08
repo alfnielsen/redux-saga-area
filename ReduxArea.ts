@@ -94,7 +94,7 @@ const CreateReduxArea = <TState>(initialState: TState) => {
    const actions: ReduxAction[] = []
    const area = {
       namePrefix: '',
-      fetchPostfix: ['Fetch', 'Success', 'Failure'],
+      fetchPostfix: ['Request', 'Success', 'Failure'],
       options: (options: ICreateReduxAreaOptions) => {
          if (options.namePrefix !== undefined) {
             area.namePrefix = options.namePrefix
@@ -160,7 +160,7 @@ const CreateReduxArea = <TState>(initialState: TState) => {
                                              mappedFailureAction = produceMethod(mappedFailureAction, failureProducer)
                                              actions.push(mappedFailureAction as unknown as ReduxAction)
                                              return {
-                                                fetch: mappedAction,
+                                                request: mappedAction,
                                                 success: mappedSuccessAction,
                                                 failure: mappedFailureAction
                                              };

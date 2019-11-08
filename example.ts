@@ -73,7 +73,7 @@ export type UpdateNameType = typeof updateName.type
 export const MyAreaActions = {
    updateName,
    clearName,
-   getNameFetch: getName.fetch,
+   getNameRequest: getName.request,
    getNameSuccess: getName.success,
    getNameFailure: getName.failure
 }

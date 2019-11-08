@@ -41,12 +41,11 @@ const area = CreateReduxArea<IMyAreaState>({
 // Change options for area (Optional)
 area.options({
    namePrefix: '@@MyApp/MyArea/',
-   fetchPostfix: ['Fetch', 'Success', 'Failure']
 })
 
 // Add single action
 const updateName = area
-   .add('MY_AREA_UPDATE_NAME')
+   .add('updateName')
    .action((name: string) => ({
       name
    }))
@@ -55,15 +54,15 @@ const updateName = area
    })
 
 // Add single empty action (action has only a type and no other values)
-const clearName = area
-   .add('MY_AREA_CLEAR_NAME')
+const updateName = area
+   .add('updateName')
    .produce(draft => {
       draft.name = ''
    })
 
 // Add fetch action (3 actions)
 const getName = area
-   .addFetch('MY_AREA_GET_NAME')
+   .addFetch('getName')
    .action((id: number) => ({ id }))
    .produce(draft => {
       draft.loading = true
@@ -162,7 +161,7 @@ const area = CreateReduxArea<IMyAreaState>({
 
 **namePrefix** Prefix all names in `add` and `addFetch` _(Default: '')_
 
-**fetchPostfix** Postfix the 3 action created with `addFetch` _(Default: ['Fetch', 'Success', 'Failure'])_
+**fetchPostfix** Postfix the 3 action created with `addFetch` _(Default: ['Request', 'Success', 'Failure'])_
 
 ```ts
 import CreateReduxArea from 'redux-area'
@@ -173,7 +172,7 @@ interface IMyAreaState {
 
 area.options({
    namePrefix: '@@MyApp/MyArea/',
-   fetchPostfix: ['Fetch', 'Success', 'Failure']
+   fetchPostfix: ['Request', 'Success', 'Failure']
 })
 ```
 
@@ -183,7 +182,7 @@ You can now add actions to the area:
 
 ```ts
 const updateName = area
-   .add('MY_AREA_UPDATE_NAME')
+   .add('updateName')
    .action((name: string) => ({
       name
    }))
@@ -204,11 +203,11 @@ You can also add a fetch actions to the area:
 
 It will create three action-creators and three reducers.
 
-The name (action type) wil be the name in `addFetch` postfix with 'Fetch', 'Success' and 'Failure'. _(Can be changed in area options)_
+The name (action type) wil be the name in `addFetch` postfix with 'Request', 'Success' and 'Failure'. _(Can be changed in area options)_
 
 ```ts
 const getName = area
-   .addFetch('MY_AREA_GET_NAME')
+   .addFetch('getName')
    .action((id: number) => ({ id }))
    .produce(draft => {
       draft.loading = true
@@ -233,7 +232,7 @@ You can export each action directly if you prefer:
 
 ```ts
 export const updateName = area
-   .add('MY_AREA_UPDATE_NAME')
+   .add('updateName')
    (...)
 ```
 

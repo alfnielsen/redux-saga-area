@@ -52,7 +52,7 @@ const CreateReduxArea = (initialState) => {
     const actions = [];
     const area = {
         namePrefix: '',
-        fetchPostfix: ['Fetch', 'Success', 'Failure'],
+        fetchPostfix: ['Request', 'Success', 'Failure'],
         options: (options) => {
             if (options.namePrefix !== undefined) {
                 area.namePrefix = options.namePrefix;
@@ -89,44 +89,48 @@ const CreateReduxArea = (initialState) => {
                 };
             }
         }),
-        addFetch: (name) => ({
-            action: (action) => {
-                let mappedAction = actionMethod(area.namePrefix + name + area.fetchPostfix[0], action);
-                return {
-                    produce: (producer) => {
-                        mappedAction = produceMethod(mappedAction, producer);
-                        actions.push(mappedAction);
-                        return {
-                            successAction: (successAction) => {
-                                let mappedSuccessAction = actionMethod(area.namePrefix + name + area.fetchPostfix[1], successAction);
-                                return {
-                                    successProduce: (successProducer) => {
-                                        mappedSuccessAction = produceMethod(mappedSuccessAction, successProducer);
-                                        actions.push(mappedSuccessAction);
-                                        return {
-                                            failureAction: (failureAction) => {
-                                                let mappedFailureAction = actionMethod(area.namePrefix + name + area.fetchPostfix[2], failureAction);
-                                                return {
-                                                    failureProduce: (failureProducer) => {
-                                                        mappedFailureAction = produceMethod(mappedFailureAction, failureProducer);
-                                                        actions.push(mappedSuccessAction);
-                                                        return {
-                                                            fetch: mappedAction,
-                                                            success: mappedSuccessAction,
-                                                            failure: mappedFailureAction
-                                                        };
-                                                    }
-                                                };
-                                            }
-                                        };
-                                    }
-                                };
-                            }
-                        };
-                    }
-                };
-            }
-        }),
+        addFetch: (name) => {
+            const addFetchObject = {
+                produce: (producer) => { addFetchObject.action(() => { }).produce(producer); },
+                action: (action) => {
+                    let mappedAction = actionMethod(area.namePrefix + name + area.fetchPostfix[0], action);
+                    return {
+                        produce: (producer) => {
+                            mappedAction = produceMethod(mappedAction, producer);
+                            actions.push(mappedAction);
+                            return {
+                                successAction: (successAction) => {
+                                    let mappedSuccessAction = actionMethod(area.namePrefix + name + area.fetchPostfix[1], successAction);
+                                    return {
+                                        successProduce: (successProducer) => {
+                                            mappedSuccessAction = produceMethod(mappedSuccessAction, successProducer);
+                                            actions.push(mappedSuccessAction);
+                                            return {
+                                                failureAction: (failureAction) => {
+                                                    let mappedFailureAction = actionMethod(area.namePrefix + name + area.fetchPostfix[2], failureAction);
+                                                    return {
+                                                        failureProduce: (failureProducer) => {
+                                                            mappedFailureAction = produceMethod(mappedFailureAction, failureProducer);
+                                                            actions.push(mappedFailureAction);
+                                                            return {
+                                                                request: mappedAction,
+                                                                success: mappedSuccessAction,
+                                                                failure: mappedFailureAction
+                                                            };
+                                                        }
+                                                    };
+                                                }
+                                            };
+                                        }
+                                    };
+                                }
+                            };
+                        }
+                    };
+                }
+            };
+            return addFetchObject;
+        },
         rootReducer: (state = initialState, action) => {
             const actionArea = actions.find(x => x.name === action.type);
             if (actionArea) {
