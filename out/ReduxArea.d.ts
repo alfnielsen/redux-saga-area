@@ -5,18 +5,26 @@ declare type ReduxAction = ((...args: any) => AnyAction) & {
     name: string;
     reducer: Reducer;
 };
-declare type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & {
+export declare type FetchAreaAction<TState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func> = {
+    request: AreaAction<TState, TFetchAction>;
+    success: AreaAction<TState, TSuccessAction>;
+    failure: AreaAction<TState, TFailureAction>;
+};
+export declare type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & {
     type: string;
 }) & {
     name: string;
     reducer: Reducer<Immutable<TState>, ReturnType<T> & {
         type: string;
     }>;
+    use: (draft: Draft<TState>, action: ReturnType<T> & {
+        type: string;
+    }) => void;
     type: ReturnType<T> & {
         type: string;
     };
 };
-declare type AreaActionEmpty<TState> = (() => {
+export declare type AreaActionEmpty<TState> = (() => {
     type: string;
 }) & {
     name: string;
@@ -76,11 +84,7 @@ declare const CreateReduxArea: <TState>(initialState: TState) => {
                         failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
                             failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & {
                                 type: string;
-                            }) => void) => {
-                                request: AreaAction<TState, TFetchAction>;
-                                success: AreaAction<TState, TSuccessAction>;
-                                failure: AreaAction<TState, TFailureAction>;
-                            };
+                            }) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction, TFailureAction>;
                         };
                     };
                 };

@@ -3,13 +3,21 @@ import { AnyAction, Reducer } from 'redux'
 
 type Func = (...args: any) => any
 type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer }
-type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & { type: string }) & {
+
+export type FetchAreaAction<TState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func> = {
+   request: AreaAction<TState, TFetchAction>
+   success: AreaAction<TState, TSuccessAction>
+   failure: AreaAction<TState, TFailureAction>
+}
+
+export type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & { type: string }) & {
    name: string,
-   reducer: Reducer<Immutable<TState>, ReturnType<T> & { type: string }>
+   reducer: Reducer<Immutable<TState>, ReturnType<T> & { type: string }>,
+   use: (draft: Draft<TState>, action: ReturnType<T> & { type: string; }) => void,
    type: ReturnType<T> & { type: string }
 }
 
-type AreaActionEmpty<TState> = (() => { type: string }) & {
+export type AreaActionEmpty<TState> = (() => { type: string }) & {
    name: string,
    reducer: Reducer<Immutable<TState>, { type: string }>
    type: { type: string }
@@ -34,6 +42,10 @@ const produceMethod = <TState, T extends Func>(
 ) => {
    Object.defineProperty(mappedAction, 'reducer', {
       value: produce(producer) as Reducer<Immutable<TState>, ReturnType<T> & { type: string }>,
+      writable: false
+   })
+   Object.defineProperty(mappedAction, 'use', {
+      value: (draft: Draft<TState>, action: ReturnType<T> & { type: string }) => producer(draft, action),
       writable: false
    })
    return mappedAction;
@@ -163,7 +175,7 @@ const CreateReduxArea = <TState>(initialState: TState) => {
                                                 request: mappedAction,
                                                 success: mappedSuccessAction,
                                                 failure: mappedFailureAction
-                                             };
+                                             } as FetchAreaAction<TState, TFetchAction, TSuccessAction, TFailureAction>;
                                           }
                                        }
                                     }

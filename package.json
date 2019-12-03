@@ -1,25 +1,25 @@
 {
-   "name": "redux-area",
-   "version": "0.1.0",
-   "description": "simplified strongly typed redux",
-   "keywords": [
-      "redux",
-      "typescript",
-      "simple",
-      "strongly-typed",
-      "auto generated interface"
-   ],
-   "publisher": "alfnielsen",
-   "main": "out/ReduxArea.js",
-   "types": "out/ReduxArea.d.ts",
-   "scripts": {
-      "build": "tsc --declaration"
-   },
-   "author": "",
-   "license": "ISC",
-   "homepage": "https://github.com/alfnielsen/redux-area#readme",
-   "dependencies": {
-      "immer": "^5.0.0",
-      "redux": "^4.0.4"
-   }
+  "name": "redux-area",
+  "version": "0.1.4",
+  "description": "simplified strongly typed redux",
+  "keywords": [
+    "redux",
+    "typescript",
+    "simple",
+    "strongly-typed",
+    "auto generated interface"
+  ],
+  "publisher": "alfnielsen",
+  "main": "out/ReduxArea.js",
+  "types": "out/ReduxArea.d.ts",
+  "scripts": {
+    "build": "tsc --declaration"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://github.com/alfnielsen/redux-area#readme",
+  "dependencies": {
+    "immer": "^5.0.0",
+    "redux": "^4.0.4"
+  }
 }

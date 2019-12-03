@@ -1,3 +1,19 @@
+## 0.1.3+0.1.4
+
+### Add experimental feature (Can change in the future)
+
+Each action now has a new method `use` which can be used in other producers.
+
+This is done so that logic from another producer can be used.
+
+The feature is experimental, will will maybe change in the future until its' proven reliable,
+and has the correct format.
+
+## 0.1.1+0.1.2
+
+Update ts definition for FetchAreaAction and exported it and AreaAction type ofr usages in saga's and other places,
+where generic approach can simplify your code.
+
 ## 0.1.0
 
 Change d.ts a little for cleaner view: It will now have AreaAction with initial state and the definition for the action creator.

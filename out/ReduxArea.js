@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const immer_1 = require("immer");
 const actionMethod = (name, action) => {
-    const actionCreator = (...args) => (Object.assign({}, action.apply(null, args), { type: name }));
+    const actionCreator = (...args) => (Object.assign(Object.assign({}, action.apply(null, args)), { type: name }));
     const mappedAction = actionCreator;
     Object.defineProperty(mappedAction, 'name', {
         value: name,
@@ -13,6 +13,10 @@ const actionMethod = (name, action) => {
 const produceMethod = (mappedAction, producer) => {
     Object.defineProperty(mappedAction, 'reducer', {
         value: immer_1.default(producer),
+        writable: false
+    });
+    Object.defineProperty(mappedAction, 'use', {
+        value: (draft, action) => producer(draft, action),
         writable: false
     });
     return mappedAction;
