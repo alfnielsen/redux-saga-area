@@ -13,7 +13,7 @@ export type FetchAreaAction<TState, TFetchAction extends Func, TSuccessAction ex
 export type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & { type: string }) & {
    name: string,
    reducer: Reducer<Immutable<TState>, ReturnType<T> & { type: string }>,
-   use: (draft: Draft<TState>, action: ReturnType<T> & { type: string; }) => void,
+   use: (draft: Draft<TState>, action: ReturnType<T>) => void,
    type: ReturnType<T> & { type: string }
 }
 
@@ -45,7 +45,10 @@ const produceMethod = <TState, T extends Func>(
       writable: false
    })
    Object.defineProperty(mappedAction, 'use', {
-      value: (draft: Draft<TState>, action: ReturnType<T> & { type: string }) => producer(draft, action),
+      value: (draft: Draft<TState>, action: ReturnType<T>) => {
+         action.type = mappedAction.name
+         producer(draft, action)
+      },
       writable: false
    })
    return mappedAction;

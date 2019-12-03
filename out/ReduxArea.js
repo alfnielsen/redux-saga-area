@@ -16,7 +16,10 @@ const produceMethod = (mappedAction, producer) => {
         writable: false
     });
     Object.defineProperty(mappedAction, 'use', {
-        value: (draft, action) => producer(draft, action),
+        value: (draft, action) => {
+            action.type = mappedAction.name;
+            producer(draft, action);
+        },
         writable: false
     });
     return mappedAction;

@@ -17,9 +17,7 @@ export declare type AreaAction<TState, T extends Func> = ((...args: Parameters<T
     reducer: Reducer<Immutable<TState>, ReturnType<T> & {
         type: string;
     }>;
-    use: (draft: Draft<TState>, action: ReturnType<T> & {
-        type: string;
-    }) => void;
+    use: (draft: Draft<TState>, action: ReturnType<T>) => void;
     type: ReturnType<T> & {
         type: string;
     };

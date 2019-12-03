@@ -1,3 +1,13 @@
+## 0.1.5
+
+Update `use` so it don't take `type` in its action.
+
+`type` will automatically be filled with the action type that use it called on:
+
+```ts
+setActiveSelector.use(draft, { ... }) // type in action is setActiveSelector.name
+```
+
 ## 0.1.3+0.1.4
 
 ### Add experimental feature (Can change in the future)
