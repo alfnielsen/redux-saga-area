@@ -11,7 +11,7 @@ All action (including fetch) can now be omitted.
 
 If they are omitted a `empty` will be created that with only the `type`
 
-### option can be chained directly on an area.
+### options can be chained directly on an area creation.
 
 You can now use fluent interface for `options` on `CreateReduxArea`
 
