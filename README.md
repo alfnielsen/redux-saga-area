@@ -224,6 +224,32 @@ const getName = area
   });
 ```
 
+### Standard fetch failure
+
+You can add a standard fetch failure with fluent interface on CreateReduxArea.
+
+> NOTE: you cannot add it on an area like area.setStandardFetchFailure !
+
+This will create a version of area that has `standardFailure()` options beside the normal `addFailure`
+
+```ts
+const area = CreateReduxArea(state)
+  .options({
+    namePrefix: "@@MyArea/"
+  })
+  .setStandardFetchFailure(
+    (error: Error) => ({ error }),
+    (draft, { error }) => {
+      draft.error = error;
+    }
+  );
+
+const fetchAction = area
+  .addFetch("getAll")
+  .successProduce((draft, action) => {})
+  .standardFailure();
+```
+
 ### 3) Export area (Actions, Names, Reducers and AreaRootReducer)
 
 How you want to export the actionCreators is up to you and your team.

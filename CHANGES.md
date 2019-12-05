@@ -1,3 +1,33 @@
+## 0.2.0
+
+### Add new 'setStandardFetchFailure'
+
+You can now define a standard failure for fetch actions.
+When added each `addFetch` will have a `standardFailure()` option beside the `failureAction`
+
+### All action are optional
+
+All action (including fetch) can now be omitted.
+
+If they are omitted a `empty` will be created that with only the `type`
+
+### option can be chained directly on an area.
+
+You can now use fluent interface for `options` on `CreateReduxArea`
+
+```ts
+const area = CreateReduxArea(state).options({
+  namePrefix: "@@MyArea/"
+});
+// or you can use the old version
+area.options();
+```
+
+### Internal
+
+Major restructure of code, to make adding new feature,
+including easy structure change like the omit of action.
+
 ## 0.1.5
 
 Update `use` so it don't take `type` in its action.

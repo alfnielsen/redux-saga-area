@@ -17,12 +17,6 @@ export type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => Re
    type: ReturnType<T> & { type: string }
 }
 
-export type AreaActionEmpty<TState> = (() => { type: string }) & {
-   name: string,
-   reducer: Reducer<Immutable<TState>, { type: string }>
-   type: { type: string }
-}
-
 const actionMethod = <TState, T extends Func>(name: string, action: T) => {
    const actionCreator = (...args: Parameters<typeof action>) => ({
       ...action.apply(null, args),
@@ -58,13 +52,20 @@ const produceMethodEmpty = <TState>(
    name: string,
    producer: (draft: Draft<TState>, action: { type: string }) => void
 ) => {
-   const mappedAction = (() => ({ type: name })) as AreaActionEmpty<TState>
+   const mappedAction = (() => ({ type: name })) as AreaAction<TState, () => TState>
    Object.defineProperty(mappedAction, 'reducer', {
       value: produce(producer) as Reducer<Immutable<TState>, { type: string }>,
       writable: false
    })
    Object.defineProperty(mappedAction, 'name', {
       value: name,
+      writable: false
+   })
+   Object.defineProperty(mappedAction, 'use', {
+      value: (draft: Draft<TState>) => {
+         const action = { type: mappedAction.name }
+         producer(draft, action)
+      },
       writable: false
    })
    return mappedAction
@@ -105,11 +106,206 @@ interface ICreateReduxAreaOptions {
    fetchPostfix?: string[]
 }
 
+interface IBaseArea<TState> {
+   initialState: TState
+   namePrefix: string,
+   fetchPostfix: string[],
+   actions: ReduxAction[],
+   rootReducer: Reducer<TState, AnyAction>,
+   options: (options: ICreateReduxAreaOptions) => void
+}
+// --------- Add Flow ---------
+const createAddFunc = <TState>(area: IBaseArea<TState>) => {
+   return (name: string) => ({
+      produce: (producer: (draft: Draft<TState>, action: { type: string }) => void) => {
+         const mappedAction = produceMethodEmpty(area.namePrefix + name, producer)
+         area.actions.push(mappedAction as unknown as ReduxAction)
+         return mappedAction;
+      },
+      reducer: (
+         reducer: (state: TState, reducerAction: { type: string }) => any | void
+      ) => {
+         const mappedAction = reduceMethodEmpty(area.namePrefix + name, reducer)
+         area.actions.push(mappedAction as ReduxAction)
+         return mappedAction;
+      },
+      action: <TAction extends Func>(action: TAction) => {
+         let mappedAction = actionMethod<TState, TAction>(area.namePrefix + name, action)
+         type MappedAction = ReturnType<TAction> & { type: string }
+         return {
+            produce: (producer: (draft: Draft<TState>, action: MappedAction) => void) => {
+               mappedAction = produceMethod(mappedAction, producer)
+               area.actions.push(mappedAction as unknown as ReduxAction)
+               return mappedAction;
+            },
+            reducer: (
+               reducer: (state: TState, reducerAction: MappedAction) => any | void
+            ) => {
+               mappedAction = reduceMethod(mappedAction, reducer)
+               area.actions.push(mappedAction as unknown as ReduxAction)
+               return mappedAction;
+            }
+         }
+      }
+   })
+}
+// --------- AddFetch Flow ---------
+const createAddFetchRequestFunc = <TState>(area: IBaseArea<TState>) => {
+   return (name: string) => ({
+      action: <TFetchAction extends Func>(action: TFetchAction) => {
+         let mappedAction = actionMethod<TState, TFetchAction>(area.namePrefix + name + area.fetchPostfix[0], action)
+         return {
+            produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & { type: string }) => void) => {
+               mappedAction = produceMethod(mappedAction, producer)
+               area.actions.push(mappedAction as unknown as ReduxAction)
+               return {
+                  successAction: createAddFetchSuccessFunc(area, name, mappedAction)
+               };
+            }
+         }
+      },
+      produce: (producer: (draft: Draft<TState>, action: { type: string }) => void) => {
+         const mappedAction = produceMethodEmpty(area.namePrefix + name, producer)
+         area.actions.push(mappedAction as unknown as ReduxAction)
+         return {
+            successAction: createAddFetchSuccessFunc(area, name, mappedAction)
+         };
+      }
+   })
+
+}
+
+const createAddFetchSuccessFunc = <TState, TFetchRequestAction extends Func>(area: IBaseArea<TState>, name: string, requestAction: AreaAction<TState, TFetchRequestAction>) => {
+   return <TSuccessAction extends Func>(successAction: TSuccessAction) => {
+      let fetchSuccessAction = actionMethod<TState, TSuccessAction>(area.namePrefix + name + area.fetchPostfix[1], successAction)
+      return {
+         successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & { type: string }) => void) => {
+            fetchSuccessAction = produceMethod(fetchSuccessAction, successProducer)
+            area.actions.push(fetchSuccessAction as unknown as ReduxAction)
+            return {
+               failureAction: createAddFetchFailureFunc(area, name, requestAction, fetchSuccessAction)
+            };
+         }
+      }
+   }
+}
+
+const createAddFetchFailureFunc = <TState, TFetchRequestAction extends Func, TFetchSuccessAction extends Func>(
+   area: IBaseArea<TState>,
+   name: string,
+   requestAction: AreaAction<TState, TFetchRequestAction>,
+   fetchSuccessAction: AreaAction<TState, TFetchSuccessAction>
+) => {
+   return <TFailureAction extends Func>(failureAction: TFailureAction) => {
+      let fetchFailureAction = actionMethod<TState, TFailureAction>(area.namePrefix + name + area.fetchPostfix[2], failureAction)
+      return {
+         failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & { type: string }) => void) => {
+            fetchFailureAction = produceMethod(fetchFailureAction, failureProducer)
+            area.actions.push(fetchFailureAction as unknown as ReduxAction)
+            return {
+               request: requestAction,
+               success: fetchSuccessAction,
+               failure: fetchFailureAction
+            } as FetchAreaAction<TState, TFetchRequestAction, TFetchSuccessAction, TFailureAction>;
+         }
+      }
+   }
+}
+// --------- Add Standard Fetch Flow ---------
+const createAddStandardFetchRequestFunc = <TState, TStandardFetchFailureAction extends Func>(
+   area: IBaseArea<TState>,
+   failureAction: TStandardFetchFailureAction,
+   failureProducer: (draft: Draft<TState>, action: ReturnType<TStandardFetchFailureAction> & { type: string }) => void
+) => {
+   return (name: string) => ({
+      action: <TFetchAction extends Func>(action: TFetchAction) => {
+         let mappedAction = actionMethod<TState, TFetchAction>(area.namePrefix + name + area.fetchPostfix[0], action)
+         return {
+            produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & { type: string }) => void) => {
+               mappedAction = produceMethod(mappedAction, producer)
+               area.actions.push(mappedAction as unknown as ReduxAction)
+               return createAddStandardFetchSuccessFunc(area, name, mappedAction, failureAction, failureProducer)
+            }
+         }
+      },
+      produce: (producer: (draft: Draft<TState>, action: { type: string }) => void) => {
+         const mappedAction = produceMethodEmpty(area.namePrefix + name + area.fetchPostfix[0], producer)
+         area.actions.push(mappedAction as unknown as ReduxAction)
+         return createAddStandardFetchSuccessFunc(area, name, mappedAction, failureAction, failureProducer)
+      }
+   })
+}
+
+const createAddStandardFetchSuccessFunc = <TState, TStandardFetchFailureAction extends Func, TRequestAction extends Func>(
+   area: IBaseArea<TState>,
+   name: string,
+   requestAction: AreaAction<TState, TRequestAction>,
+   failureAction: TStandardFetchFailureAction,
+   failureProducer: (draft: Draft<TState>, action: ReturnType<TStandardFetchFailureAction> & { type: string }) => void
+) => {
+   return {
+      successAction: <TSuccessAction extends Func>(action: TSuccessAction) => {
+         let successAction = actionMethod<TState, TSuccessAction>(area.namePrefix + name + area.fetchPostfix[1], action)
+         return {
+            successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & { type: string }) => void) => {
+               successAction = produceMethod(successAction, successProducer)
+               area.actions.push(successAction as unknown as ReduxAction)
+               return {
+                  failureAction: createAddFetchFailureFunc(area, name, requestAction, successAction),
+                  standardFailure: createAddStandardFetchFailureFunc(area, name, requestAction, successAction, failureAction, failureProducer)
+               };
+            }
+         }
+      },
+      successProduce: (successProducer: (draft: Draft<TState>, action: { type: string }) => void) => {
+         const successAction = produceMethodEmpty(area.namePrefix + name + area.fetchPostfix[1], successProducer)
+         area.actions.push(successAction as unknown as ReduxAction)
+         return {
+            failureAction: createAddFetchFailureFunc(area, name, requestAction, successAction),
+            standardFailure: createAddStandardFetchFailureFunc(area, name, requestAction, successAction, failureAction, failureProducer)
+         };
+      }
+   }
+}
+
+const createAddStandardFetchFailureFunc = <TState, TStandardFetchFailureAction extends Func, TRequestAction extends Func, TSuccessAction extends Func>(
+   area: IBaseArea<TState>,
+   name: string,
+   requestAction: AreaAction<TState, TRequestAction>,
+   successAction: AreaAction<TState, TSuccessAction>,
+   failureAction: TStandardFetchFailureAction,
+   failureProducer: (draft: Draft<TState>, action: ReturnType<TStandardFetchFailureAction> & { type: string }) => void
+) => {
+   return () => {
+      let mappedFailureAction = actionMethod<TState, TStandardFetchFailureAction>(area.namePrefix + name + area.fetchPostfix[2], failureAction)
+      mappedFailureAction = produceMethod(mappedFailureAction, failureProducer)
+      area.actions.push(mappedFailureAction as unknown as ReduxAction)
+      return {
+         request: requestAction,
+         success: successAction,
+         failure: mappedFailureAction
+      } as FetchAreaAction<TState, TRequestAction, TSuccessAction, TStandardFetchFailureAction>;
+   }
+
+}
+
+
+
+
+// ----------- 
 const CreateReduxArea = <TState>(initialState: TState) => {
-   const actions: ReduxAction[] = []
-   const area = {
+   const area: IBaseArea<TState> = {
       namePrefix: '',
       fetchPostfix: ['Request', 'Success', 'Failure'],
+      actions: [],
+      initialState,
+      rootReducer: (state: TState = initialState, action) => {
+         const actionArea = area.actions.find(x => x.name === action.type)
+         if (actionArea) {
+            return actionArea.reducer(state, action)
+         }
+         return state
+      },
       options: (options: ICreateReduxAreaOptions) => {
          if (options.namePrefix !== undefined) {
             area.namePrefix = options.namePrefix
@@ -119,94 +315,32 @@ const CreateReduxArea = <TState>(initialState: TState) => {
          }
          return area;
       },
-      add: (name: string) => ({
-         produce: (producer: (draft: Draft<TState>, action: { type: string }) => void) => {
-            const mappedAction = produceMethodEmpty(area.namePrefix + name, producer)
-            actions.push(mappedAction as unknown as ReduxAction)
-            return mappedAction;
-         },
-         reducer: (
-            reducer: (state: TState, reducerAction: { type: string }) => any | void
-         ) => {
-            const mappedAction = reduceMethodEmpty(area.namePrefix + name, reducer)
-            actions.push(mappedAction as ReduxAction)
-            return mappedAction;
-         },
-         action: <TAction extends Func>(action: TAction) => {
-            let mappedAction = actionMethod<TState, TAction>(area.namePrefix + name, action)
-            type MappedAction = ReturnType<TAction> & { type: string }
-            return {
-               produce: (producer: (draft: Draft<TState>, action: MappedAction) => void) => {
-                  mappedAction = produceMethod(mappedAction, producer)
-                  actions.push(mappedAction as unknown as ReduxAction)
-                  return mappedAction;
-               },
-               reducer: (
-                  reducer: (state: TState, reducerAction: MappedAction) => any | void
-               ) => {
-                  mappedAction = reduceMethod(mappedAction, reducer)
-                  actions.push(mappedAction as unknown as ReduxAction)
-                  return mappedAction;
-               }
-            }
-         }
-      }),
-      addFetch: (name: string) => {
-         const addFetchObject = {
-            produce: (producer: (draft: Draft<TState>, action: { type: string }) => void): any => { addFetchObject.action(() => { }).produce(producer) },
-            action: <TFetchAction extends Func>(action: TFetchAction) => {
-               let mappedAction = actionMethod<TState, TFetchAction>(area.namePrefix + name + area.fetchPostfix[0], action)
-               return {
-                  produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & { type: string }) => void) => {
-                     mappedAction = produceMethod(mappedAction, producer)
-                     actions.push(mappedAction as unknown as ReduxAction)
-                     return {
-                        successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
-                           let mappedSuccessAction = actionMethod<TState, TSuccessAction>(area.namePrefix + name + area.fetchPostfix[1], successAction)
-                           return {
-                              successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & { type: string }) => void) => {
-                                 mappedSuccessAction = produceMethod(mappedSuccessAction, successProducer)
-                                 actions.push(mappedSuccessAction as unknown as ReduxAction)
-                                 return {
-                                    failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
-                                       let mappedFailureAction = actionMethod<TState, TFailureAction>(area.namePrefix + name + area.fetchPostfix[2], failureAction)
-                                       return {
-                                          failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & { type: string }) => void) => {
-                                             mappedFailureAction = produceMethod(mappedFailureAction, failureProducer)
-                                             actions.push(mappedFailureAction as unknown as ReduxAction)
-                                             return {
-                                                request: mappedAction,
-                                                success: mappedSuccessAction,
-                                                failure: mappedFailureAction
-                                             } as FetchAreaAction<TState, TFetchAction, TSuccessAction, TFailureAction>;
-                                          }
-                                       }
-                                    }
-                                 };
-                              }
-                           }
-                        }
-                     };
-                  }
-               }
-            }
-         }
-         return addFetchObject
-      },
-      rootReducer: (
-         state: TState = initialState,
-         action: AnyAction
-      ): TState => {
-         const actionArea = actions.find(x => x.name === action.type)
-         if (actionArea) {
-            return actionArea.reducer(state, action)
-         }
-         return state
-      },
-      actions,
-      initialState
    }
-   return area
+   const returner = {
+      ...area,
+      add: createAddFunc(area),
+      addFetch: createAddFetchRequestFunc(area),
+      options: (options: ICreateReduxAreaOptions) => {
+         area.options(options);
+         return returner
+      },
+      setStandardFetchFailure: <TStandardFetchFailureAction extends Func>(
+         action: TStandardFetchFailureAction,
+         producer: (draft: Draft<TState>, action: ReturnType<TStandardFetchFailureAction> & { type: string }) => void
+      ) => {
+         const returnerExp = {
+            ...returner,
+            addFetch: createAddStandardFetchRequestFunc(area, action, producer),
+            options: (options: ICreateReduxAreaOptions) => {
+               area.options(options);
+               return returnerExp
+            }
+         }
+         delete returnerExp.setStandardFetchFailure;
+         return returnerExp
+      }
+   }
+   return returner
 }
 
 export default CreateReduxArea
