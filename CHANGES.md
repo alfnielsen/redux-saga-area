@@ -1,3 +1,45 @@
+## 0.3.0
+
+Major rewrite of the internal code.
+
+### Added Interception
+
+Interception methods has been added to options:
+
+```ts
+interface ICreateReduxAreaOptions<TState> {
+  namePrefix?: string
+  fetchPostfix?: string[]
+  interceptNormal?: (draft: Draft<TState>, action: { type: string }) => void
+  interceptRequest?: (draft: Draft<TState>, action: { type: string }) => void
+  interceptSuccess?: (draft: Draft<TState>, action: { type: string }) => void
+  interceptFailure?: (draft: Draft<TState>, action: { type: string }) => void
+}
+```
+
+### All action (action, successAction and failureAction) are now optional
+
+Beside the `action` original optional action,
+all actions are now optional
+
+Because of the now interception method,
+the in next version I will try to make producers optional as well,
+(Some fetch reducers will only consist of a request action and a successAction and produce,
+because all other state change its handle by interception and standard failure..)
+
+### Breaking changes
+
+Due to the new internal (done to make interception correct),
+the rootReducer method has changed from a property to a generator:
+
+```ts
+// Old:
+export reducers = area.rootReducer
+// new:
+export reducers = area.rootReducer() // <- Its now a function call
+
+```
+
 ## 0.2.0
 
 ### Add new 'setStandardFetchFailure'
@@ -18,9 +60,9 @@ You can now use fluent interface for `options` on `CreateReduxArea`
 ```ts
 const area = CreateReduxArea(state).options({
   namePrefix: "@@MyArea/"
-});
+})
 // or you can use the old version
-area.options();
+area.options()
 ```
 
 ### Internal

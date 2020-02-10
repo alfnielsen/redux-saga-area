@@ -92,28 +92,28 @@ type UpdateNameActionType = typeof updateName.type
 // Export initial state for area
 export const MyAreaInitState = area.initialState
 // Export root-reducer for area
-export const MyAreaRootReducer = area.rootReducer
+export const MyAreaRootReducer = area.rootReducer()
 ```
 
 configureStore.ts (The same as normal redux)
 
 ```ts
-import { createStore, combineReducers } from "redux";
-import { MyAreaRootReducer, IMyAreaState } from "./MyArea.ts";
-import { OtherAreaRootReducer, IOtherAreaState } from "./OtherAreaReducer.ts";
+import { createStore, combineReducers } from "redux"
+import { MyAreaRootReducer, IMyAreaState } from "./MyArea.ts"
+import { OtherAreaRootReducer, IOtherAreaState } from "./OtherAreaReducer.ts"
 // import { composeWithDevTools } from 'redux-devtools-extension/developmentOnly' // <-- Add for Dev Extention
 
 // Optional create full interface for entire store:
 export interface StoreState {
-  myArea: IMyAreaState;
-  otherArea: IOtherAreaState;
+  myArea: IMyAreaState
+  otherArea: IOtherAreaState
 }
 
 // Combined different areas into the store root reducer
 const rootReducer = combineReducers({
   myArea: MyAreaRootReducer,
   otherArea: OtherAreaRootReducer
-});
+})
 
 // Normal redux store setup
 const configureStore = () => {
@@ -121,9 +121,9 @@ const configureStore = () => {
     rootReducer
     // composeWithDevTools() // <-- Add for Dev Extention
     //applyMiddleware(...middleware),
-  );
-  return newStore;
-};
+  )
+  return newStore
+}
 ```
 
 ## Install
@@ -146,15 +146,15 @@ Create an interface that describe the initial state for the redux area
 then create it with the default values:
 
 ```ts
-import CreateReduxArea from "redux-area";
+import CreateReduxArea from "redux-area"
 
 interface IMyAreaState {
-  name: string;
+  name: string
 }
 
 const area = CreateReduxArea<IMyAreaState>({
   name: ""
-});
+})
 ```
 
 ### 1.2) Optional options
@@ -164,16 +164,10 @@ const area = CreateReduxArea<IMyAreaState>({
 **fetchPostfix** Postfix the 3 action created with `addFetch` _(Default: ['Request', 'Success', 'Failure'])_
 
 ```ts
-import CreateReduxArea from "redux-area";
-
-interface IMyAreaState {
-  name: string;
-}
-
 area.options({
   namePrefix: "@@MyApp/MyArea/",
   fetchPostfix: ["Request", "Success", "Failure"]
-});
+})
 ```
 
 ### 2) Add Actions
@@ -187,8 +181,8 @@ const updateName = area
     name
   }))
   .produce((draft, { name }) => {
-    draft.name = name;
-  });
+    draft.name = name
+  })
 ```
 
 redux-area will use typescripts generic `ReturnType` and `Parameters` to
@@ -210,25 +204,120 @@ const getName = area
   .addFetch("getName")
   .action((id: number) => ({ id }))
   .produce(draft => {
-    draft.loading = true;
+    draft.loading = true
   })
   .successAction((name: string) => ({ name }))
   .successProduce((draft, { name }) => {
-    draft.name = name;
-    draft.loading = false;
+    draft.name = name
+    draft.loading = false
   })
   .failureAction((error: Error) => ({ error }))
   .failureProduce((draft, { error }) => {
-    draft.loading = false;
-    draft.error = error;
-  });
+    draft.loading = false
+    draft.error = error
+  })
 ```
+
+### Intercept and omitting fetch (auto generated)
+
+From version 0.3.0 interception can be added from the options.
+
+There is 4 interception:
+
+- _normal_ all normal (non fetch) action
+- _request_, _success_ and _failure_
+
+By using interception in combination of addFetch you can avoid writing a lot of boilerplate code,
+like loading flag ect.
+
+Together with the interception, version 0.3.0 allows omitting all parts of a addFetch
+(except that it needs either the of the ending produce: failureProduce or standardFailure)
+
+_interceptFailure_ will also intercept standardFailure if its created.
+
+Note: Redux (and Saga's) can intercept any action by it self.
+The interception in redux-area is just an easy way of controller interception for an area,
+and helping auto-generate common boilerplate code.
+
+```ts
+import CreateReduxArea from "redux-area"
+
+const area = CreateReduxArea({
+  types: [] as ITypes,
+  lastCalled: "",
+  loading: false
+})
+  .options({
+    namePrefix: "@@MyApp/MyArea/",
+    interceptNormal: (draft, { type }) => {
+      draft.lastCalled = type
+    },
+    interceptRequest: draft => {
+      draft.loading = true
+    },
+    interceptSuccess: draft => {
+      draft.loading = false
+    },
+    interceptFailure: draft => {
+      draft.loading = false
+    }
+  })
+  .setStandardFetchFailure(
+    (error: Error) => ({ error }),
+    (draft, { error }) => {
+      draft.error = error
+    }
+  )
+
+const getAllType = area
+  .addFetch("getAllType")
+  .successAction((types: ITypes) => ({ types }))
+  .successProduce((draft, { types }) => {
+    draft.types = types
+  })
+  .standardFailure()
+```
+
+The _getAllType_ will still create all 3 action (request, success and failure),
+but the request action is just an empty action:
+
+```ts
+const getAllType = area
+  .addFetch("getAllType")
+  .successAction((types: ITypes) => ({ types }))
+  .successProduce((draft, { types }) => {
+    draft.types = types
+  })
+  .standardFailure()
+
+// same as result:
+const getAllType = area
+  .addFetch("getAllType")
+  .action(() => ({}))
+  .produce((draft, { types }) => {})
+  .successAction((types: ITypes) => ({ types }))
+  .successProduce((draft, { types }) => {
+    draft.types = types
+  })
+  .standardFailure()
+```
+
+For rare cases the simplest version of an addFetch can be like:
+
+```ts
+const saveData = area.addFetch("saveData").standardFailure()
+```
+
+This is still create 3 action, and enabling following the action.
 
 ### Standard fetch failure
 
 You can add a standard fetch failure with fluent interface on CreateReduxArea.
 
 > NOTE: you cannot add it on an area like area.setStandardFetchFailure !
+
+Due to the way typescript calculate generic there are some setStandardFetchFailure need
+to be set directly (fluent interface) on the original CreateReduxArea
 
 This will create a version of area that has `standardFailure()` options beside the normal `addFailure`
 
@@ -240,14 +329,14 @@ const area = CreateReduxArea(state)
   .setStandardFetchFailure(
     (error: Error) => ({ error }),
     (draft, { error }) => {
-      draft.error = error;
+      draft.error = error
     }
-  );
+  )
 
 const fetchAction = area
   .addFetch("getAll")
   .successProduce((draft, action) => {})
-  .standardFailure();
+  .standardFailure()
 ```
 
 ### 3) Export area (Actions, Names, Reducers and AreaRootReducer)
@@ -277,10 +366,10 @@ If your using Saga's or other types of reducer/elements that need the action nam
 you can get them by the _name_ property and you can get the type definition with the _type_ property:
 
 ```ts
-const action = updateName; // => the action creator
-const actionName = updateName.name; // => 'MY_AREA_UPDATE_NAME'
-const reducer = updateName.reducer; // => the reducer method
-type ActionType = typeof updateName.type; // => undefined (Only for type definition)
+const action = updateName // => the action creator
+const actionName = updateName.name // => 'MY_AREA_UPDATE_NAME'
+const reducer = updateName.reducer // => the reducer method
+type ActionType = typeof updateName.type // => undefined (Only for type definition)
 ```
 
 An area contains five properties: `rootReducer`, `initialState`, `actions`, `namePrefix` and `fetchPostfix`
@@ -288,8 +377,8 @@ An area contains five properties: `rootReducer`, `initialState`, `actions`, `nam
 Normally it's only 'rootReducer' and maybe 'initialState' that is used.
 
 ```ts
-export const MyAreaInitState = area.initialState;
-export const MyAreaRootReducer = area.rootReducer;
+export const MyAreaInitState = area.initialState
+export const MyAreaRootReducer = area.rootReducer()
 ```
 
 ## Use other producer in a producer
@@ -305,15 +394,15 @@ const setAllOptions = area
   .add("setAllOptions")
   .action((options: IOption) => ({ options }))
   .produce((draft, { options }) => {
-    setOption1.use(draft, { ...options.option1 });
-    setOption2.use(draft, { ...options.option2 });
-  });
+    setOption1.use(draft, { ...options.option1 })
+    setOption2.use(draft, { ...options.option2 })
+  })
 ```
 
 The use method will automatically set the action type.
 
 ```ts
-setOption1.use(draft, { ...options.option1 });
+setOption1.use(draft, { ...options.option1 })
 // The action will be { type: setOption1.name, ...options.option1 }
 ```
 

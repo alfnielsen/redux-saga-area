@@ -4,18 +4,46 @@ import CreateReduxArea from "./ReduxArea"
 // You can also get it from (typeof area.initialState)
 export interface IMyAreaState {
    readonly name: string
+   readonly lastCall: string,
    readonly loading: boolean
    readonly error?: Error
+   readonly types: string[]
 }
 
 const area = CreateReduxArea<IMyAreaState>({
    name: '',
-   loading: false
-})
-area.options({
+   lastCall: '',
+   loading: false,
+   types: []
+}).options({
    namePrefix: '@@MyApp/MyArea/',
-   fetchPostfix: ['Request', 'Success', 'Failure']
-})
+   fetchPostfix: ['Request', 'Success', 'Failure'],
+   interceptNormal: (draft, { type }) => {
+      draft.lastCall = type
+   },
+   interceptRequest: (draft) => {
+      draft.loading = true
+   },
+   interceptSuccess: (draft) => {
+      draft.loading = false
+   },
+   interceptFailure: (draft) => {
+      draft.loading = false
+   }
+}).setStandardFetchFailure(
+   (error: Error) => ({ error }),
+   (draft, { error }) => {
+      draft.error = error
+   }
+)
+
+const getAllType = area
+   .addFetch('getAllType')
+   .successAction((types: string[]) => ({ types }))
+   .successProduce((draft, { types }) => {
+      draft.types = types
+   })
+
 
 const updateName = area
    .add('updateName')
