@@ -4,187 +4,205 @@ declare type Func = (...args: any) => any;
 declare type ReduxAction = ((...args: any) => AnyAction) & {
     name: string;
     reducer: Reducer;
+    intercept?: Reducer;
 };
+declare type EmptyActionType = {
+    type: string;
+};
+declare type EmptyAction = () => EmptyActionType;
+declare type ReturnTypeAction<T extends Func> = ReturnType<T> & EmptyActionType;
 export declare type FetchAreaAction<TState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func> = {
     request: AreaAction<TState, TFetchAction>;
     success: AreaAction<TState, TSuccessAction>;
     failure: AreaAction<TState, TFailureAction>;
 };
-export declare type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnType<T> & {
-    type: string;
-}) & {
+export declare type TIntercept<TState> = (draft: Draft<TState>, action: EmptyActionType) => void;
+export declare type AreaAction<TState, T extends Func> = ((...args: Parameters<T>) => ReturnTypeAction<T>) & {
     name: string;
-    reducer: Reducer<Immutable<TState>, ReturnType<T> & {
-        type: string;
-    }>;
+    reducer: Reducer<Immutable<TState>, ReturnTypeAction<T>>;
+    intercept?: (draft: Draft<TState>, action: EmptyActionType) => void;
     use: (draft: Draft<TState>, action: ReturnType<T>) => void;
-    type: ReturnType<T> & {
-        type: string;
-    };
+    type: ReturnTypeAction<T>;
 };
-interface ICreateReduxAreaOptions {
+interface ICreateReduxAreaOptions<TState> {
     namePrefix?: string;
     fetchPostfix?: string[];
+    interceptNormal?: (draft: Draft<TState>, action: EmptyActionType) => void;
+    interceptRequest?: (draft: Draft<TState>, action: EmptyActionType) => void;
+    interceptSuccess?: (draft: Draft<TState>, action: EmptyActionType) => void;
+    interceptFailure?: (draft: Draft<TState>, action: EmptyActionType) => void;
 }
-declare const CreateReduxArea: <TState>(initialState: TState) => {
-    add: (name: string) => {
-        produce: (producer: (draft: Draft<TState>, action: {
-            type: string;
-        }) => void) => AreaAction<TState, () => TState>;
-        reducer: (reducer: (state: TState, reducerAction: {
-            type: string;
-        }) => any) => (() => {
-            type: string;
-        }) & {
-            name: string;
-            reducer: Reducer<Immutable<TState>, {
-                type: string;
-            }>;
-            type: {
-                type: string;
-            };
-        };
-        action: <TAction extends Func>(action: TAction) => {
-            produce: (producer: (draft: Draft<TState>, action: ReturnType<TAction> & {
-                type: string;
-            }) => void) => AreaAction<TState, TAction>;
-            reducer: (reducer: (state: TState, reducerAction: ReturnType<TAction> & {
-                type: string;
-            }) => any) => AreaAction<TState, TAction>;
-        };
-    };
-    addFetch: (name: string) => {
-        action: <TFetchAction extends Func>(action: TFetchAction) => {
-            produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction> & {
-                type: string;
-            }) => void) => {
-                successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
-                    successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction> & {
-                        type: string;
-                    }) => void) => {
-                        failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
-                            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction> & {
-                                type: string;
-                            }) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction, TFailureAction>;
-                        };
-                    };
-                };
-            };
-        };
-        produce: (producer: (draft: Draft<TState>, action: {
-            type: string;
-        }) => void) => {
-            successAction: <TSuccessAction_1 extends Func>(successAction: TSuccessAction_1) => {
-                successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction_1> & {
-                    type: string;
-                }) => void) => {
-                    failureAction: <TFailureAction_1 extends Func>(failureAction: TFailureAction_1) => {
-                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction_1> & {
-                            type: string;
-                        }) => void) => FetchAreaAction<TState, () => TState, TSuccessAction_1, TFailureAction_1>;
-                    };
-                };
-            };
-        };
-    };
-    options: (options: ICreateReduxAreaOptions) => any;
-    setStandardFetchFailure: <TStandardFetchFailureAction extends Func>(action: TStandardFetchFailureAction, producer: (draft: Draft<TState>, action: ReturnType<TStandardFetchFailureAction> & {
-        type: string;
-    }) => void) => {
-        addFetch: (name: string) => {
-            action: <TFetchAction_1 extends Func>(action: TFetchAction_1) => {
-                produce: (producer: (draft: Draft<TState>, action: ReturnType<TFetchAction_1> & {
-                    type: string;
-                }) => void) => {
-                    successAction: <TSuccessAction_2 extends Func>(action: TSuccessAction_2) => {
-                        successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction_2> & {
-                            type: string;
-                        }) => void) => {
-                            failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
-                                failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction_2> & {
-                                    type: string;
-                                }) => void) => FetchAreaAction<TState, TFetchAction_1, TSuccessAction_2, TFailureAction_2>;
-                            };
-                            standardFailure: () => FetchAreaAction<TState, TFetchAction_1, TSuccessAction_2, TStandardFetchFailureAction>;
-                        };
-                    };
-                    successProduce: (successProducer: (draft: Draft<TState>, action: {
-                        type: string;
-                    }) => void) => {
-                        failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
-                            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction_3> & {
-                                type: string;
-                            }) => void) => FetchAreaAction<TState, TFetchAction_1, () => TState, TFailureAction_3>;
-                        };
-                        standardFailure: () => FetchAreaAction<TState, TFetchAction_1, () => TState, TStandardFetchFailureAction>;
-                    };
-                };
-            };
-            produce: (producer: (draft: Draft<TState>, action: {
-                type: string;
-            }) => void) => {
-                successAction: <TSuccessAction_3 extends Func>(action: TSuccessAction_3) => {
-                    successProduce: (successProducer: (draft: Draft<TState>, action: ReturnType<TSuccessAction_3> & {
-                        type: string;
-                    }) => void) => {
-                        failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
-                            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction_4> & {
-                                type: string;
-                            }) => void) => FetchAreaAction<TState, () => TState, TSuccessAction_3, TFailureAction_4>;
-                        };
-                        standardFailure: () => FetchAreaAction<TState, () => TState, TSuccessAction_3, TStandardFetchFailureAction>;
-                    };
-                };
-                successProduce: (successProducer: (draft: Draft<TState>, action: {
-                    type: string;
-                }) => void) => {
-                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
-                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnType<TFailureAction_5> & {
-                            type: string;
-                        }) => void) => FetchAreaAction<TState, () => TState, () => TState, TFailureAction_5>;
-                    };
-                    standardFailure: () => FetchAreaAction<TState, () => TState, () => TState, TStandardFetchFailureAction>;
-                };
-            };
-        };
-        options: (options: ICreateReduxAreaOptions) => any;
-        add: (name: string) => {
-            produce: (producer: (draft: Draft<TState>, action: {
-                type: string;
-            }) => void) => AreaAction<TState, () => TState>;
-            reducer: (reducer: (state: TState, reducerAction: {
-                type: string;
-            }) => any) => (() => {
-                type: string;
-            }) & {
-                name: string;
-                reducer: Reducer<Immutable<TState>, {
-                    type: string;
-                }>;
-                type: {
-                    type: string;
-                };
-            };
-            action: <TAction extends Func>(action: TAction) => {
-                produce: (producer: (draft: Draft<TState>, action: ReturnType<TAction> & {
-                    type: string;
-                }) => void) => AreaAction<TState, TAction>;
-                reducer: (reducer: (state: TState, reducerAction: ReturnType<TAction> & {
-                    type: string;
-                }) => any) => AreaAction<TState, TAction>;
-            };
-        };
-        setStandardFetchFailure: any;
-        initialState: TState;
-        namePrefix: string;
-        fetchPostfix: string[];
-        actions: ReduxAction[];
-        rootReducer: Reducer<TState, AnyAction>;
-    };
+declare class Area<TState, TStandardFailureAction extends Func> {
     initialState: TState;
+    standardFailureAction?: TStandardFailureAction | undefined;
+    standardFailureReducer?: ((draft: Draft<TState>, action: ReturnTypeAction<TStandardFailureAction>) => void) | undefined;
     namePrefix: string;
     fetchPostfix: string[];
+    interceptNormal?: TIntercept<TState>;
+    interceptRequest?: TIntercept<TState>;
+    interceptSuccess?: TIntercept<TState>;
+    interceptFailure?: TIntercept<TState>;
     actions: ReduxAction[];
-    rootReducer: Reducer<TState, AnyAction>;
-};
+    constructor(initialState: TState, standardFailureAction?: TStandardFailureAction | undefined, standardFailureReducer?: ((draft: Draft<TState>, action: ReturnTypeAction<TStandardFailureAction>) => void) | undefined);
+    rootReducer(): (state: TState | undefined, action: AnyAction) => any;
+    /**
+     * Add a single action. \
+     * Optional 'interceptNormal' in options will effect this. \
+     * You can omit 'action' if its not needed. \
+     * 'produce' uses [immer](https://immerjs.github.io/immer/docs/introduction) (always recommended) \
+     * 'reducer' will create a normal reducer
+     * @param name
+     */
+    add(name: string): {
+        produce: (producer: (draft: Draft<TState>, action: EmptyActionType) => void) => AreaAction<TState, () => EmptyActionType>;
+        reducer: (reducer: (state: TState, reducerAction: EmptyActionType) => any) => (() => EmptyActionType) & {
+            name: string;
+            reducer: Reducer<Immutable<TState>, EmptyActionType>;
+            type: EmptyActionType;
+        };
+        action: <TAction extends Func>(action: TAction) => {
+            produce: (producer: (draft: Draft<TState>, action: ReturnTypeAction<TAction>) => void) => AreaAction<TState, TAction>;
+            reducer: (reducer: (state: TState, reducerAction: ReturnTypeAction<TAction>) => any) => TAction;
+        };
+    };
+    /**
+     * Add 3 action (Request, success and failure). \
+     * Optional 'interceptRequest', 'interceptSuccess' and 'interceptFailure' in options will effect this. \
+     * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final standardFailure of produceFailure) \
+     * @param name
+     */
+    addFetch(name: string): {
+        standardFailure: () => FetchAreaAction<TState, EmptyAction, EmptyAction, TStandardFailureAction>;
+        failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
+            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction>) => void) => FetchAreaAction<TState, EmptyAction, EmptyAction, TFailureAction>;
+        };
+        failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, EmptyAction, EmptyAction, EmptyAction>;
+        successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
+            standardFailure: () => FetchAreaAction<TState, EmptyAction, TSuccessAction, TStandardFailureAction>;
+            failureAction: <TFailureAction_1 extends Func>(failureAction: TFailureAction_1) => {
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_1>) => void) => FetchAreaAction<TState, EmptyAction, TSuccessAction, TFailureAction_1>;
+            };
+            failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, EmptyAction, TSuccessAction, EmptyAction>;
+            successProduce: (successProducer: (draft: Draft<TState>, action: ReturnTypeAction<TSuccessAction>) => void) => {
+                standardFailure: () => FetchAreaAction<TState, EmptyAction, TSuccessAction, TStandardFailureAction>;
+                failureAction: <TFailureAction_1 extends Func>(failureAction: TFailureAction_1) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_1>) => void) => FetchAreaAction<TState, EmptyAction, TSuccessAction, TFailureAction_1>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, EmptyAction, TSuccessAction, EmptyAction>;
+            };
+        };
+        successProduce: (successProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => {
+            standardFailure: () => FetchAreaAction<TState, EmptyAction, EmptyAction, TStandardFailureAction>;
+            failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction>) => void) => FetchAreaAction<TState, EmptyAction, EmptyAction, TFailureAction>;
+            };
+            failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, EmptyAction, EmptyAction, EmptyAction>;
+        };
+        action: <TFetchAction extends Func>(action: TFetchAction) => {
+            standardFailure: () => FetchAreaAction<TState, TFetchAction, EmptyAction, TStandardFailureAction>;
+            failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_2>) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, TFailureAction_2>;
+            };
+            failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, EmptyAction>;
+            successAction: <TSuccessAction_1 extends Func>(successAction: TSuccessAction_1) => {
+                standardFailure: () => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TStandardFailureAction>;
+                failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_3>) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TFailureAction_3>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, EmptyAction>;
+                successProduce: (successProducer: (draft: Draft<TState>, action: ReturnTypeAction<TSuccessAction_1>) => void) => {
+                    standardFailure: () => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TStandardFailureAction>;
+                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_3>) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TFailureAction_3>;
+                    };
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, EmptyAction>;
+                };
+            };
+            successProduce: (successProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => {
+                standardFailure: () => FetchAreaAction<TState, TFetchAction, EmptyAction, TStandardFailureAction>;
+                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_2>) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, TFailureAction_2>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, EmptyAction>;
+            };
+            produce: (producer: (draft: Draft<TState>, action: ReturnTypeAction<TFetchAction>) => void) => {
+                standardFailure: () => FetchAreaAction<TState, TFetchAction, EmptyAction, TStandardFailureAction>;
+                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_2>) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, TFailureAction_2>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, EmptyAction>;
+                successAction: <TSuccessAction_1 extends Func>(successAction: TSuccessAction_1) => {
+                    standardFailure: () => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TStandardFailureAction>;
+                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_3>) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TFailureAction_3>;
+                    };
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, EmptyAction>;
+                    successProduce: (successProducer: (draft: Draft<TState>, action: ReturnTypeAction<TSuccessAction_1>) => void) => {
+                        standardFailure: () => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TStandardFailureAction>;
+                        failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_3>) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, TFailureAction_3>;
+                        };
+                        failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, TSuccessAction_1, EmptyAction>;
+                    };
+                };
+                successProduce: (successProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => {
+                    standardFailure: () => FetchAreaAction<TState, TFetchAction, EmptyAction, TStandardFailureAction>;
+                    failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_2>) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, TFailureAction_2>;
+                    };
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, TFetchAction, EmptyAction, EmptyAction>;
+                };
+            };
+        };
+        produce: (producer: (draft: Draft<TState>, action: EmptyActionType) => void) => {
+            standardFailure: () => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, TStandardFailureAction>;
+            failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_4>) => void) => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, TFailureAction_4>;
+            };
+            failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, EmptyAction>;
+            successAction: <TSuccessAction_2 extends Func>(successAction: TSuccessAction_2) => {
+                standardFailure: () => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, TStandardFailureAction>;
+                failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_5>) => void) => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, TFailureAction_5>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, EmptyAction>;
+                successProduce: (successProducer: (draft: Draft<TState>, action: ReturnTypeAction<TSuccessAction_2>) => void) => {
+                    standardFailure: () => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, TStandardFailureAction>;
+                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                        failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_5>) => void) => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, TFailureAction_5>;
+                    };
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, () => EmptyActionType, TSuccessAction_2, EmptyAction>;
+                };
+            };
+            successProduce: (successProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => {
+                standardFailure: () => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, TStandardFailureAction>;
+                failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                    failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction_4>) => void) => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, TFailureAction_4>;
+                };
+                failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType) => void) => FetchAreaAction<TState, () => EmptyActionType, EmptyAction, EmptyAction>;
+            };
+        };
+    };
+    options(options: ICreateReduxAreaOptions<TState>): this;
+    /**
+     * Add StandardFailure method. \
+     * Is set the standardFailure for 'addFetch' will be enabled. \
+     * Not this method must be chain directly on the CreateReduxArea to work correct. \
+     * (Due to the way typescript calculate interfaces) \
+     * @example
+     * const area = CreateReduxArea({ loading: true })
+     *    .option({...})
+     *    .setStandardFetchFailure(action, producer);
+     * // OR
+     * const area = CreateReduxArea({ loading: true })
+     *    .setStandardFetchFailure(action, producer);
+     * // DON'T DO:
+     * area.setStandardFetchFailure(action, producer); // Will NOT work
+     * area = area.setStandardFetchFailure(action, producer); // Will NOT work
+     * @param action
+     * @param producer
+     */
+    setStandardFetchFailure<TFetchAction extends Func>(action: TFetchAction, producer: (draft: Draft<TState>, action: ReturnTypeAction<TFetchAction>) => void): Area<TState, TFetchAction>;
+}
+declare const CreateReduxArea: <TState>(initialState: TState) => Area<TState, Func>;
 export default CreateReduxArea;

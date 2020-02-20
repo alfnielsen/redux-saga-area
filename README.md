@@ -19,6 +19,15 @@ Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/red
 
 Demo: [Demo in React](https://codesandbox.io/s/hardcore-snow-jql32?fontsize=14) _(editable codesandbox.io)_
 
+Fell free to add issue's in the git repository if you have examples of what would work well for your project.
+At the moment there is added experimental interception features in the @next version.
+
+**The goal is:** to easy and lessen the amount of code we need to write to get all benefits of both
+
+- redux _(single truth, deterministic state transition and view rendering, time travel ect..)_
+  and
+- typescript _(strongly typed symbols and interfaces, code checking/nullable check, auto-rewriting, autocompletion, auto-importing ect..)_.
+
 ## Example
 
 MyArea.ts

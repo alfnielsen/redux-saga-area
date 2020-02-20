@@ -1,3 +1,19 @@
+## 0.3.1
+
+Add `shortType` to all actions.
+This is the name without the area namePrefix.
+
+Add experimental feature `addActionCreatorInterception``
+
+In the first version it an intercept all action creators (.action, .successAction and .successFailure - both on add and addFetch).
+
+It intercept after the normal action is created, take that as an argument and return an object with extra properties for the action.
+
+**Note** that the only strong type part of it is {type, shortType}, so your need to make type test and casting to interact with other properties on the actions.
+
+It's possible that this feature will have interceptions for each type like the `produce` interception methods,
+but for now it an all in one.
+
 ## 0.3.0
 
 Major rewrite of the internal code.
