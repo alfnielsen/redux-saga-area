@@ -302,8 +302,8 @@ const getAllType = area
 // same as result:
 const getAllType = area
   .addFetch("getAllType")
-  .action(() => ({}))
-  .produce((draft, { types }) => {})
+  .action(() => ({})) // <-- We dont need this
+  .produce((draft, { types }) => {}) // <-- We dont need this
   .successAction((types: ITypes) => ({ types }))
   .successProduce((draft, { types }) => {
     draft.types = types
