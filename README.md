@@ -28,6 +28,30 @@ At the moment there is added experimental interception features in the @next ver
   and
 - typescript _(strongly typed symbols and interfaces, code checking/nullable check, auto-rewriting, autocompletion, auto-importing ect..)_.
 
+**Terminology**
+
+In redux-area we will talk about:
+
+- action
+
+This is an `action creator`, a method the generate an redux action, which is a plain object with at least a `type: string` property.
+
+From version 0.3.1, redux-area will also include `shortType: string`
+
+Redux-area calculate the interface for each action by making a union of the result of an action cretor and adding the `type` and `shortType` under the hood _(plus the result of action interceptions, if is added to the redux-area)_
+
+- produce (comes from the [immer](https://github.com/immerjs/immer) project).
+
+This is called a `reducer` in normal redux. A reducer takes the current state an and action and return the next state. 
+A `procuder` takes a proxy of the state an and action and dont return anything. In the producer you can mutate the proxy state called a `draft` and immer will calcalute the next state from the `draft` proxy. (Immer will also make the next state immutable, ensuring the principles of redux)
+
+- fetch
+
+In redux-area the are a specialized addFetch that generate 3 actions (a request, success and failure).
+This is simply to enable less code writing and to group this commen functionality.
+
+Combined with 'omitting' and 'interception' this can radically simplefy the code needed.
+
 ## Example
 
 MyArea.ts
@@ -227,9 +251,11 @@ const getName = area
   })
 ```
 
-### Intercept and omitting fetch (auto generated)
+### Intercept produce methods
 
-From version 0.3.0 interception can be added from the options.
+From version 0.3.0 interception of produce methods can be added from the options.
+
+// See below for interception of action-creators (They need a little defferent approch, and it not set in options)
 
 There is 4 interception:
 
@@ -287,6 +313,8 @@ const getAllType = area
   .standardFailure()
 ```
 
+### Omitting fetch (auto generated)
+
 The _getAllType_ will still create all 3 action (request, success and failure),
 but the request action is just an empty action:
 
@@ -325,8 +353,8 @@ You can add a standard fetch failure with fluent interface on CreateReduxArea.
 
 > NOTE: you cannot add it on an area like area.setStandardFetchFailure !
 
-Due to the way typescript calculate generic there are some setStandardFetchFailure need
-to be set directly (fluent interface) on the original CreateReduxArea
+Due to the way typescript calculate generic's, setStandardFetchFailure needs
+to be set directly (fluent interface) on the original CreateReduxArea.
 
 This will create a version of area that has `standardFailure()` options beside the normal `addFailure`
 
@@ -335,7 +363,7 @@ const area = CreateReduxArea(state)
   .options({
     namePrefix: "@@MyArea/"
   })
-  .setStandardFetchFailure(
+  .setStandardFetchFailure( // adding it after with: area.setStandardFetchFailure will not work!
     (error: Error) => ({ error }),
     (draft, { error }) => {
       draft.error = error
