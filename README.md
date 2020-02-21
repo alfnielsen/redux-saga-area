@@ -1,5 +1,14 @@
 # Redux-area
 
+- [Description](#anchors-in-markdown)
+- [Code Example](#anchors-in-markdown)
+- [Install](#anchors-in-markdown)
+- [Usage](#anchors-in-markdown)
+- [Features](#anchors-in-markdown)
+- [Immer](#anchors-in-markdown)
+- [Demo](#anchors-in-markdown)
+
+
 ## Description
 
 **Short:** `Simplified strongly typed redux`
@@ -53,7 +62,13 @@ This is simply to enable less code writing and to group this common functionalit
 
 Combined with 'omitting' and 'interception' this can radically simplify the code needed.
 
-## Example
+## Usages
+
+1. Add an area
+2. Add area action
+3. Export area's rootReducer and actions
+4. Register the rootReucer in a store (As normal redux)
+5. Enjoy your new simple and easy redux logic
 
 MyArea.ts
 
@@ -121,7 +136,7 @@ const getName = area
       draft.error = error
    })
 
-// WE don't need to add empty action (They will still be created in the 'getNewName')
+// We don't need to add empty action (They will still be created in the 'getNewName')
 export const getNewName = area
    .addFetch('getNewName')
    .successAction((newName: string) => ({ newName }))
@@ -195,9 +210,9 @@ Or
 yarn add redux-area
 ```
 
-## Usage
+## Features
 
-### 1) Define an area
+### Define an area
 
 Create an interface that describe the initial state for the redux area
 then create it with the default values:
@@ -214,7 +229,18 @@ const area = CreateReduxArea<IMyAreaState>({
 })
 ```
 
-### 1.2) Optional options
+Or simply use a generated interface:
+
+```ts
+import CreateReduxArea from "redux-area"
+
+const area = CreateReduxArea({
+  name: ""
+})
+// IMyAreaState can be found by: 'typeof area.initialState'
+```
+
+### Area options
 
 **namePrefix** Prefix all names in `add` and `addFetch` _(Default: '')_
 
@@ -227,7 +253,8 @@ area.options({
 })
 ```
 
-### 2) Add Actions
+
+### Add Actions
 
 You can now add actions to the area:
 
@@ -240,7 +267,15 @@ const updateName = area
   .produce((draft, { name }) => {
     draft.name = name
   })
+const getNames = area
+  .add("getName")
+  .produce((draft, { names }) => {
+    draft.name = names
+  })
 ```
+
+Your can ommit 'action' if its not needed; the action will still created as an empty action.
+
 
 redux-area will use typescript's generic `ReturnType` and `Parameters` to
 calculate how the actions interface are, by extracting the return from the actionCreator.
@@ -248,7 +283,7 @@ The `type` defined in `add` will automatically be added.
 
 In this case the actual action will be defined as: `{ type: string, name: string }`
 
-### 2.2) Add Fetch Actions
+### Add Fetch Actions
 
 You can also add a fetch action to the area:
 
@@ -415,7 +450,7 @@ const fetchAction = area
   .standardFailure()
 ```
 
-### 3) Export area (Actions, Names, Reducers and AreaRootReducer)
+### Export area (Actions, Names, Reducers and AreaRootReducer)
 
 How you want to export the actionCreators is up to you and your team.
 
@@ -488,7 +523,7 @@ setOption1.use(draft, { ...options.option1 })
 
 Redux-area uses the [immer](https://github.com/immerjs/immer) project as it's base for creating simplified reducers.
 
-## produce vs reducer
+### produce vs reducer
 
 Its recommended to always use `produce` instead of `reducer`.
 The `produce` uses [immer](https://github.com/immerjs/immer) to ensure immutable state,
@@ -498,7 +533,7 @@ and you need to ensure immutable state yourself.
 
 You can still use `reducer` for the rare cases, where optimized reducer's are needed.
 
-## Debug your producer
+### Debug your producer
 
 The _produce_ functionality from [immer](https://github.com/immerjs/immer) creates a Proxy object,
 and you will not be able to console.log(draft) you draft state.
