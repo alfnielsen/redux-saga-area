@@ -17,8 +17,8 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
-Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark) _(editable codesandbox.io)_
-Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)\_
+Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
+_(More demos in the bottom)_
 
 Fell free to add issue's in the git repository if you have examples of what would work well for your project.
 At the moment there is added experimental interception features in the @next version.
@@ -509,13 +509,9 @@ but you will be able to console.log and debug state values.
 
 ## Demo
 
-Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark) _(editable codesandbox.io)_
-Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)\_
+_(editable codesandbox.io)_
 
-<iframe
-     src="https://codesandbox.io/embed/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark"
-     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
-     title="Redux-area base ex"
-     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
-     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
-   ></iframe>
+Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
+Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
+
+[![Demo CountPages alpha](./ExImage.png)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
