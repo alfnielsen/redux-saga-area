@@ -18,7 +18,7 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
 Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark) _(editable codesandbox.io)_
-Demo: [Demo in React](https://codesandbox.io/s/hardcore-snow-jql32?fontsize=14) _(editable codesandbox.io)_
+Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)\_
 
 Fell free to add issue's in the git repository if you have examples of what would work well for your project.
 At the moment there is added experimental interception features in the @next version.
@@ -507,7 +507,10 @@ In this case you can change the 'produce' to 'reducer' to create a normal reduce
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
 
----
+## Demo
+
+Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark) _(editable codesandbox.io)_
+Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)\_
 
 <iframe
      src="https://codesandbox.io/embed/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark"
