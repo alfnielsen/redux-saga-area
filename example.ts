@@ -88,11 +88,7 @@ const getAllTypes = area
       draft.name = name
       draft.loading = false
    })
-   .failureAction((error: Error) => ({ error }))
-   .failureProduce((draft, { error }) => {
-      draft.loading = false
-      draft.error = error
-   })
+   .standardFailure()
 
 
 export type UpdateNameType = typeof updateName.type

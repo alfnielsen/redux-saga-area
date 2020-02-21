@@ -17,12 +17,13 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
+Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark) _(editable codesandbox.io)_
 Demo: [Demo in React](https://codesandbox.io/s/hardcore-snow-jql32?fontsize=14) _(editable codesandbox.io)_
 
 Fell free to add issue's in the git repository if you have examples of what would work well for your project.
 At the moment there is added experimental interception features in the @next version.
 
-**The goal is:** to easy and lessen the amount of code we need to write to get all benefits of both
+**The goal is:** to ease and reduce the amount of code we need to write to get all benefits of both
 
 - redux _(single truth, deterministic state transition and view rendering, time travel ect..)_
   and
@@ -42,15 +43,15 @@ Redux-area calculate the interface for each action by making a union of the resu
 
 - produce (comes from the [immer](https://github.com/immerjs/immer) project).
 
-This is called a `reducer` in normal redux. A reducer takes the current state an and action and return the next state. 
-A `procuder` takes a proxy of the state an and action and dont return anything. In the producer you can mutate the proxy state called a `draft` and immer will calcalute the next state from the `draft` proxy. (Immer will also make the next state immutable, ensuring the principles of redux)
+This is called a `reducer` in normal redux. A reducer takes the current state an and action and return the next state.
+A `procuder` takes a proxy of the state an and action and don't return anything. In the producer you can mutate the proxy state called a `draft` and [immer](https://github.com/immerjs/immer) will calculate the next state from the `draft` proxy. ([Immer](https://github.com/immerjs/immer) will also make the next state immutable, ensuring the principles of redux)
 
 - fetch
 
-In redux-area the are a specialized addFetch that generate 3 actions (a request, success and failure).
-This is simply to enable less code writing and to group this commen functionality.
+Redux-area has a specialized `addFetch` method, that generate 3 actions (a request, success and failure).
+This is simply to enable less code writing and to group this common functionality, that does servser/api calls.
 
-Combined with 'omitting' and 'interception' this can radically simplefy the code needed.
+Combined with 'omitting' and 'interception' this can radically simplify the code needed.
 
 ## Example
 
@@ -69,12 +70,23 @@ export interface IMyAreaState {
 const area = CreateReduxArea<IMyAreaState>({
    name: ''
    loading: false
-})
-
-// Change options for area (Optional)
-area.options({
+}).options({
    namePrefix: '@@MyApp/MyArea/',
-})
+   interceptRequest: (draft) => {
+      draft.loading = true
+   },
+   interceptSuccess: (draft) => {
+      draft.loading = false
+   },
+   interceptFailure: (draft) => {
+      draft.loading = false
+   }
+}).setStandardFetchFailure(
+   (error: Error) => ({ error }),
+   (draft, { error }) => {
+      draft.error = error
+   }
+)
 
 // Add single action
 const updateName = area
@@ -97,19 +109,26 @@ const clearName = area
 const getName = area
    .addFetch('getName')
    .action((id: number) => ({ id }))
-   .produce(draft => {
-      draft.loading = true
+   .produce((draft) => {
+      draft.name = ''
    })
    .successAction((name: string) => ({ name }))
    .successProduce((draft, { name }) => {
       draft.name = name
-      draft.loading = false
    })
    .failureAction((error: Error) => ({ error }))
    .failureProduce((draft, { error }) => {
-      draft.loading = false
       draft.error = error
    })
+
+// WE don't need to add empty action (They will still be created in the 'getNewName')
+export const getNewName = area
+   .addFetch('getNewName')
+   .successAction((newName: string) => ({ newName }))
+   .successProduce((draft, { newName }) => {
+      draft.name = newName
+   })
+   .standardFailure()
 
 // Export Redux actions
 export const MyAreaActions = {
@@ -117,9 +136,14 @@ export const MyAreaActions = {
    clearName,
    getNameFetch: getName.fetch,
    getNameSuccess: getName.success,
-   getNameFailure: getName.failure
+   getNameFailure: getName.failure,
+   // By exporting the 'getNewName',
+   // Saga's ect. can get the success and failure methods,
+   // and you only have to expose then fetch to views.
+   // (Or you can add all like the 'getName')
+   getNewName: getNewName.fetch
 }
-// You can get the action type definition for Saga custom reducers ect. like this:
+// You can get the action type definition for Saga's, custom reducers, ect. like this:
 type UpdateNameActionType = typeof updateName.type
 
 // Export initial state for area
@@ -218,17 +242,17 @@ const updateName = area
   })
 ```
 
-redux-area will use typescripts generic `ReturnType` and `Parameters` to
-determent how the actions is by extracting the return from the actionCreator.
-The type defined in `add` will automatically be added.
+redux-area will use typescript's generic `ReturnType` and `Parameters` to
+calculate how the actions interface are, by extracting the return from the actionCreator.
+The `type` defined in `add` will automatically be added.
 
-In this case the actual action will be defined as: `{ type: string, name: string}`
+In this case the actual action will be defined as: `{ type: string, name: string }`
 
 ### 2.2) Add Fetch Actions
 
-You can also add a fetch actions to the area:
+You can also add a fetch action to the area:
 
-It will create three action-creators and three reducers.
+It will create three action-creators and three reducers (producers).
 
 The name (action type) wil be the name in `addFetch` postfix with 'Request', 'Success' and 'Failure'. _(Can be changed in area options)_
 
@@ -255,24 +279,25 @@ const getName = area
 
 From version 0.3.0 interception of produce methods can be added from the options.
 
-// See below for interception of action-creators (They need a little defferent approch, and it not set in options)
+// See below for interception of action-creators (They need a little different approach, and it not set in options)
 
 There is 4 interception:
 
-- _normal_ all normal (non fetch) action
+- _normal_ all normal (non fetch) actions
 - _request_, _success_ and _failure_
 
 By using interception in combination of addFetch you can avoid writing a lot of boilerplate code,
 like loading flag ect.
 
-Together with the interception, version 0.3.0 allows omitting all parts of a addFetch
-(except that it needs either the of the ending produce: failureProduce or standardFailure)
+From version 0.3.0 it is allowed to omit all parts of a addFetch.
+(except that it needs one of the of the ending producers: failureProduce or standardFailure)
 
 _interceptFailure_ will also intercept standardFailure if its created.
 
 Note: Redux (and Saga's) can intercept any action by it self.
-The interception in redux-area is just an easy way of controller interception for an area,
-and helping auto-generate common boilerplate code.
+
+The interception in redux-area is just an easy way of controlling interception for an area,
+and help auto-generate common boilerplate code.
 
 ```ts
 import CreateReduxArea from "redux-area"
@@ -304,16 +329,26 @@ const area = CreateReduxArea({
     }
   )
 
-const getAllType = area
-  .addFetch("getAllType")
-  .successAction((types: ITypes) => ({ types }))
-  .successProduce((draft, { types }) => {
-    draft.types = types
+const getUser = area
+  .addFetch("getUser")
+  .action((id: number) => ({ id }))
+  .produce((draft, { types }) => {
+    draft.user = undefined
+  })
+  .successAction((user: IUser) => ({ user }))
+  .successProduce((draft, { user }) => {
+    draft.user = user
   })
   .standardFailure()
 ```
 
+Each of getUser's methods: { request, success, failure } includes setting the loading flag.
+
+This is done by changing the reducer at create time, so all time-travel ect. will work normally.
+
 ### Omitting fetch (auto generated)
+
+For fetch action you only need to write action/producers is they are needed:
 
 The _getAllType_ will still create all 3 action (request, success and failure),
 but the request action is just an empty action:
@@ -327,7 +362,7 @@ const getAllType = area
   })
   .standardFailure()
 
-// same as result:
+// Same as result:
 const getAllType = area
   .addFetch("getAllType")
   .action(() => ({})) // <-- We dont need this
@@ -339,13 +374,16 @@ const getAllType = area
   .standardFailure()
 ```
 
+If request interceptions is added, the omitted `action` and `produce` method is still created,
+and will create a reducer that set ex a loading flag (Or what ever the interception does)
+
 For rare cases the simplest version of an addFetch can be like:
 
 ```ts
 const saveData = area.addFetch("saveData").standardFailure()
 ```
 
-This is still create 3 action, and enabling following the action.
+This will still create 3 action.
 
 ### Standard fetch failure
 
@@ -363,7 +401,8 @@ const area = CreateReduxArea(state)
   .options({
     namePrefix: "@@MyArea/"
   })
-  .setStandardFetchFailure( // adding it after with: area.setStandardFetchFailure will not work!
+  .setStandardFetchFailure(
+    // adding it after with: area.setStandardFetchFailure will not work!
     (error: Error) => ({ error }),
     (draft, { error }) => {
       draft.error = error
@@ -411,7 +450,9 @@ type ActionType = typeof updateName.type // => undefined (Only for type definiti
 
 An area contains five properties: `rootReducer`, `initialState`, `actions`, `namePrefix` and `fetchPostfix`
 
-Normally it's only 'rootReducer' and maybe 'initialState' that is used.
+(From version 0.3.0 `rootReducer` it a method not a property, so remember to add `()` )
+
+Normally it's only 'rootReducer()' and maybe 'initialState' that is used.
 
 ```ts
 export const MyAreaInitState = area.initialState
@@ -422,7 +463,7 @@ export const MyAreaRootReducer = area.rootReducer()
 
 Sometime some logic in one producer should be use by another.
 
-For this eac action has the `use` property, which can be call from other producers
+For this the action has the `use` method, which can be call from other producers
 
 EX:
 
@@ -465,3 +506,13 @@ and you will not be able to console.log(draft) you draft state.
 In this case you can change the 'produce' to 'reducer' to create a normal reducer.
 It will not actually work as a reducer since you don't return a new state,
 but you will be able to console.log and debug state values.
+
+---
+
+<iframe
+     src="https://codesandbox.io/embed/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark"
+     style="width:100%; height:500px; border:0; border-radius: 4px; overflow:hidden;"
+     title="Redux-area base ex"
+     allow="geolocation; microphone; camera; midi; vr; accelerometer; gyroscope; payment; ambient-light-sensor; encrypted-media; usb"
+     sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin"
+   ></iframe>
