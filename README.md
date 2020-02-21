@@ -1,12 +1,11 @@
 # Redux-area
 
-- [Description](#anchors-in-markdown)
-- [Code Example](#anchors-in-markdown)
-- [Install](#anchors-in-markdown)
-- [Usage](#anchors-in-markdown)
-- [Features](#anchors-in-markdown)
-- [Immer](#anchors-in-markdown)
-- [Demo](#anchors-in-markdown)
+- [Description](#Description)
+- [Usage](#Usage)
+- [Install](#Install)
+- [Features](#Features)
+- [Immer](#Immer)
+- [Demo](#Demo)
 
 
 ## Description
@@ -62,7 +61,7 @@ This is simply to enable less code writing and to group this common functionalit
 
 Combined with 'omitting' and 'interception' this can radically simplify the code needed.
 
-## Usages
+## Usage
 
 1. Add an area
 2. Add area action
