@@ -512,6 +512,7 @@ but you will be able to console.log and debug state values.
 _(editable codesandbox.io)_
 
 Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
+
 Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
 
 [![Demo CountPages alpha](./ExImage.png)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
