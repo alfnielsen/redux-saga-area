@@ -9,130 +9,211 @@ type EmptyAction<AreaActionType> = () => EmptyActionType<AreaActionType>
 type ReturnTypeAction<T extends Func, AreaActionType> = ReturnType<T> & EmptyActionType<AreaActionType>
 type ActionCreatorInterceptor<AreaActionType> = (act: ReduxAreaAnyAction) => AreaActionType
 
-export type FetchAreaAction<TState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func, AreaActionType> = {
-   request: AreaAction<TState, TFetchAction, AreaActionType>
-   success: AreaAction<TState, TSuccessAction, AreaActionType>
-   failure: AreaAction<TState, TFailureAction, AreaActionType>
+export type FetchAreaAction<TAppState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func, AreaActionType> = {
+   request: AreaAction<TAppState, TAreaState, TFetchAction, AreaActionType>
+   success: AreaAction<TAppState, TAreaState, TSuccessAction, AreaActionType>
+   failure: AreaAction<TAppState, TAreaState, TFailureAction, AreaActionType>
 }
 export type TIntercept<TState, AreaActionType> = (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
 
-export type AreaAction<TState, T extends Func, AreaActionType> = ((...args: Parameters<T>) => ReturnTypeAction<T, AreaActionType>) & {
+export type AreaAction<TAppState, TAreaState, T extends Func, AreaActionType> = ((...args: Parameters<T>) => ReturnTypeAction<T, AreaActionType>) & {
    name: string,
-   reducer: Reducer<Immutable<TState>, ReturnTypeAction<T, AreaActionType>>,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   use: (draft: Draft<TState>, action: ReturnType<T>) => void,
+   reducer: Reducer<Immutable<TAppState & TAreaState>, ReturnTypeAction<T, AreaActionType>>,
+   //   intercept?: TIntercept<TAppState & TAreaState, AreaActionType>,
+   use: (draft: Draft<TAppState & TAreaState>, action: ReturnTypeAction<T, AreaActionType>) => void,
    type: ReturnTypeAction<T, AreaActionType>
 }
 
-const produceMethod = <TState, TAction extends Func, AreaActionType>(
-   shortName: string,
-   name: string,
-   action: TAction,
-   producer: (draft: Draft<TState>, action: ReturnTypeAction<TAction, AreaActionType>) => void,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   actionCreatorInterceptor?: ActionCreatorInterceptor<AreaActionType>
+const produceMethod = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   TAction extends Func,
+   >(
+      shortName: string,
+      name: string,
+      action: TAction,
+      producer: (draft: Draft<TAppState & TAreaState>, action: ReturnTypeAction<TAction, TAppActionType & TAreaActionType>) => void,
+      appIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaIntercept?: TIntercept<TAppState & TAreaState, TAppActionType & TAreaActionType>[],
+      appActionIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaActionIntercept?: TIntercept<TAppState & TAreaState, TAppActionType & TAreaActionType>[],
 ) => {
    const actionCreator = (...args: Parameters<TAction>) => {
       let actionResult = action.apply(null, args)
-      if (actionCreatorInterceptor) {
-         return {
-            ...actionResult,
-            type: name,
-            shortType: shortName,
-            ...actionCreatorInterceptor({
-               ...actionResult,
-               type: name,
-               shortType: shortName,
-            })
-         }
-      } else {
-         return {
-            ...actionResult,
-            type: name,
-            shortType: shortName,
-         }
+      // if (area.appOptions.appActionInterceptor && area.areaOptions.actionInterceptor) {
+      //    return {
+      //       ...actionResult,
+      //       type: name,
+      //       shortType: shortName,
+      //       ...area.appOptions.appActionInterceptor({
+      //          ...actionResult,
+      //          type: name,
+      //          shortType: shortName,
+      //       }),
+      //       ...area.areaOptions.actionInterceptor({
+      //          ...actionResult,
+      //          type: name,
+      //          shortType: shortName,
+      //       })
+      //    }
+      // } else if (area.appOptions.appActionInterceptor) {
+      //    return {
+      //       ...actionResult,
+      //       type: name,
+      //       shortType: shortName,
+      //       ...area.appOptions.appActionInterceptor({
+      //          ...actionResult,
+      //          type: name,
+      //          shortType: shortName,
+      //       })
+      //    }
+      // } else if (area.areaOptions.actionInterceptor) {
+      //    return {
+      //       ...actionResult,
+      //       type: name,
+      //       shortType: shortName,
+      //       ...area.areaOptions.actionInterceptor({
+      //          ...actionResult,
+      //          type: name,
+      //          shortType: shortName,
+      //       })
+      //    }
+      // } else {
+      //    return {
+      //       ...actionResult,
+      //       type: name,
+      //       shortType: shortName,
+      //    }
+      // }
+      return {
+         ...actionResult,
+         type: name,
+         shortType: shortName,
       }
    }
-   const mappedAction = actionCreator as AreaAction<TState, TAction, AreaActionType>
+   const mappedAction = actionCreator as AreaAction<TAppState, TAreaState, TAction, TAppActionType & TAreaActionType>
    Object.defineProperty(mappedAction, 'name', {
       value: name,
       writable: false
    })
-   Object.defineProperty(mappedAction, 'reducer', {
-      value: produce(producer) as Reducer<Immutable<TState>, ReturnTypeAction<TAction, AreaActionType>>,
-      writable: false
-   })
+   if (appIntercept && areaIntercept) {
+      Object.defineProperty(mappedAction, 'reducer', {
+         value: (state: TAppState & TAreaState, action: ReturnTypeAction<TAction, TAppActionType & TAreaActionType>) => produce(draft => {
+            producer(draft, action)
+            appIntercept.forEach(inter => inter(draft, action as unknown as EmptyActionType<TAppActionType>))
+            areaIntercept.forEach(inter => inter(draft, action as unknown as EmptyActionType<TAppActionType & TAreaActionType>))
+         }) as Reducer<Immutable<TAppState & TAreaState>, ReturnTypeAction<TAction, TAppActionType & TAreaActionType>>,
+         writable: false
+      })
+   } else {
+      Object.defineProperty(mappedAction, 'reducer', {
+         value: produce(producer) as Reducer<Immutable<TAppState & TAreaState>, ReturnTypeAction<TAction, TAppActionType & TAreaActionType>>,
+         writable: false
+      })
+   }
+
    Object.defineProperty(mappedAction, 'use', {
-      value: (draft: Draft<TState>, action: ReturnType<TAction>) => {
+      value: (draft: Draft<TAppState & TAreaState>, action: ReturnType<TAction>) => {
          action.type = mappedAction.name
          producer(draft, action)
       },
       writable: false
    })
-   if (intercept) {
-      Object.defineProperty(mappedAction, 'intercept', {
-         value: produce(intercept) as Reducer<Immutable<TState>, EmptyActionType<AreaActionType>>,
-         writable: false
-      })
-   }
    return mappedAction
 }
 
-const produceMethodEmptyAction = <TState, AreaActionType>(
-   shortName: string,
-   name: string,
-   producer: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   actionCreatorInterceptor?: ActionCreatorInterceptor<AreaActionType>
+const produceMethodEmptyAction = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   >(
+      shortName: string,
+      name: string,
+      producer: (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void,
+      appIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaIntercept?: TIntercept<TAppState & TAreaState, TAreaActionType>[],
+      appActionIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaActionIntercept?: TIntercept<TAppState & TAreaState, TAppActionType & TAreaActionType>[],
 ) => {
-   const mappedAction = (() => ({})) as () => EmptyActionType<AreaActionType>
-   return produceMethod<TState, typeof mappedAction, AreaActionType>(shortName, name, mappedAction, producer, intercept, actionCreatorInterceptor)
+   const mappedAction = (() => ({})) as () => EmptyActionType<TAppActionType & TAreaActionType>
+   return produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, typeof mappedAction>(
+      shortName, name, mappedAction, producer, appIntercept, areaIntercept
+   )
 }
 
-const produceMethodEmptyProducer = <TState, TAction extends Func, AreaActionType>(
+const produceMethodEmptyProducer = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   TAction extends Func
+>(
    shortName: string,
    name: string,
    mappedAction: TAction,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   actionCreatorInterceptor?: ActionCreatorInterceptor<AreaActionType>
+   appIntercept?: TIntercept<TAppState, TAppActionType>[],
+   areaIntercept?: TIntercept<TAppState & TAreaState, TAreaActionType>[],
+   appActionIntercept?: TIntercept<TAppState, TAppActionType>[],
+   areaActionIntercept?: TIntercept<TAppState & TAreaState, TAppActionType & TAreaActionType>[],
 ) => {
-   const producer = ((draft, action) => { }) as (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
-   return produceMethod<TState, typeof mappedAction, AreaActionType>(shortName, name, mappedAction, producer, intercept, actionCreatorInterceptor)
+   const producer = ((draft, action) => { }) as (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void
+   return produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, typeof mappedAction>(
+      shortName, name, mappedAction, producer, appIntercept, areaIntercept
+   )
 }
 
-const produceMethodDoubleEmpty = <TState, AreaActionType>(
-   shortName: string,
-   name: string,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void,
-   actionCreatorInterceptor?: ActionCreatorInterceptor<AreaActionType>
+const produceMethodDoubleEmpty = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   >(
+      shortName: string,
+      name: string,
+      appIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaIntercept?: TIntercept<TAppState & TAreaState, TAreaActionType>[],
+      appActionIntercept?: TIntercept<TAppState, TAppActionType>[],
+      areaActionIntercept?: TIntercept<TAppState & TAreaState, TAppActionType & TAreaActionType>[],
 ) => {
-   const mappedAction = (() => ({})) as () => EmptyActionType<AreaActionType>
-   const producer = ((draft, action) => { }) as (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
-   return produceMethod<TState, typeof mappedAction, AreaActionType>(shortName, name, mappedAction, producer, intercept, actionCreatorInterceptor)
+   const mappedAction = (() => ({})) as () => EmptyActionType<TAppActionType & TAreaActionType>
+   const producer = ((draft, action) => { }) as (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void
+   return produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, typeof mappedAction>(
+      shortName, name, mappedAction, producer, appIntercept, areaIntercept
+   )
 }
 
 const reduceMethod = <TState, T extends Func, TAction, AreaActionType>(
    mappedAction: T,
    reducer: (state: TState, reducerAction: TAction) => TState,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
 ) => {
    Object.defineProperty(mappedAction, 'reducer', {
       value: reducer as Reducer<TState, ReturnTypeAction<T, AreaActionType>>,
       writable: false
    })
-   if (intercept) {
-      Object.defineProperty(mappedAction, 'intercept', {
-         value: produce(intercept) as Reducer<Immutable<TState>, EmptyActionType<AreaActionType>>,
-         writable: false
-      })
-   }
    return mappedAction
 }
 
 const reduceMethodEmpty = <TState, AreaActionType>(
    name: string,
    reducer: (state: TState, reducerAction: EmptyActionType<AreaActionType>) => TState,
-   intercept?: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
 ) => {
    const mappedAction = (() => ({ type: name })) as unknown as (() => EmptyActionType<AreaActionType>) & {
       name: string,
@@ -149,110 +230,233 @@ const reduceMethodEmpty = <TState, AreaActionType>(
       value: name,
       writable: false
    })
-   if (intercept) {
-      Object.defineProperty(mappedAction, 'intercept', {
-         value: produce(intercept) as Reducer<Immutable<TState>, EmptyActionType<AreaActionType>>,
-         writable: false
-      })
-   }
    return mappedAction
 }
 
 // --------- AddFetch Flow ---------
 // Request chain:
-const createRequestChain = <TState, TStandardFailureAction extends Func, AreaActionType>(area: Area<TState, TStandardFailureAction, AreaActionType>, name: string) => {
-   const requestName = area.namePrefix + name + area.fetchPostfix[0]
-   const successName = area.namePrefix + name + area.fetchPostfix[1]
-   const doubleEmptyRequestAction = produceMethodDoubleEmpty(name, requestName, area.interceptRequest, area.actionCreatorInterceptor)
-   const doubleEmptySuccessAction = produceMethodDoubleEmpty(name, successName, area.interceptSuccess, area.actionCreatorInterceptor)
+const createRequestChain = <
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   >(
+      area: Area<
+         TAppState,
+         TAppFailureAction,
+         TAppActionType,
+         TAreaState,
+         TAreaFailureAction,
+         TAreaActionType
+      >,
+      name: string
+   ) => {
+   const requestName = area.getRequestName(name)
+   const successName = area.getSuccessName(name)
+   const doubleEmptyRequestAction = produceMethodDoubleEmpty<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+      name, requestName, area.appOptions.interceptRequest, area.areaOptions.interceptRequest
+   )
+   const doubleEmptySuccessAction = produceMethodDoubleEmpty<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+      name, successName, area.appOptions.interceptSuccess, area.areaOptions.interceptSuccess
+   )
    return ({
       action: <TFetchAction extends Func>(action: TFetchAction) => {
-         const emptyProducer = produceMethodEmptyProducer(name, requestName, action, area.interceptRequest, area.actionCreatorInterceptor)
+         const emptyProducer = produceMethodEmptyProducer<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchAction>(
+            name, requestName, action, area.appOptions.interceptRequest, area.areaOptions.interceptRequest
+         )
          return {
-            produce: (producer: (draft: Draft<TState>, action: ReturnTypeAction<TFetchAction, AreaActionType>) => void) => {
-               const mappedAction = produceMethod(name, requestName, action, producer, area.interceptRequest, area.actionCreatorInterceptor)
-               return createSuccessChain<TState, TStandardFailureAction, TFetchAction, AreaActionType>(area, name, mappedAction)
+            produce: (producer: (draft: Draft<TAppState & TAreaState>, action: ReturnTypeAction<TFetchAction, TAppActionType & TAreaActionType>) => void) => {
+               const mappedAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchAction>(
+                  name, requestName, action, producer, area.appOptions.interceptRequest, area.areaOptions.interceptRequest
+               )
+               return createSuccessChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchAction>(
+                  area, name, mappedAction
+               )
             },
-            ...createSuccessChain<TState, TStandardFailureAction, TFetchAction, AreaActionType>(area, name, emptyProducer),
-            ...createFailureChain<TState, TStandardFailureAction, TFetchAction, EmptyAction<AreaActionType>, AreaActionType>(area, name, emptyProducer, doubleEmptySuccessAction),
+            ...createSuccessChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchAction>(
+               area, name, emptyProducer
+            ),
+            ...createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchAction, EmptyAction<TAppActionType & TAreaActionType>>(
+               area, name, emptyProducer, doubleEmptySuccessAction
+            ),
          }
       },
-      produce: (producer: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void) => {
-         const mappedAction = produceMethodEmptyAction(name, requestName, producer, area.interceptRequest, area.actionCreatorInterceptor)
-         return createSuccessChain<TState, TStandardFailureAction, () => EmptyActionType<AreaActionType>, AreaActionType>(area, name, mappedAction)
+      produce: (producer: (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void) => {
+         const mappedAction = produceMethodEmptyAction<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+            name, requestName, producer, area.appOptions.interceptRequest, area.areaOptions.interceptRequest
+         )
+         return createSuccessChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, () => EmptyActionType<TAppActionType & TAreaActionType>>(
+            area, name, mappedAction
+         )
       },
-      ...createSuccessChain<TState, TStandardFailureAction, EmptyAction<AreaActionType>, AreaActionType>(area, name, doubleEmptyRequestAction),
-      ...createFailureChain<TState, TStandardFailureAction, EmptyAction<AreaActionType>, EmptyAction<AreaActionType>, AreaActionType>(area, name, doubleEmptyRequestAction, doubleEmptySuccessAction),
+      ...createSuccessChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, EmptyAction<TAppActionType & TAreaActionType>>(
+         area, name, doubleEmptyRequestAction
+      ),
+      ...createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, EmptyAction<TAppActionType & TAreaActionType>, EmptyAction<TAppActionType & TAreaActionType>>(
+         area, name, doubleEmptyRequestAction, doubleEmptySuccessAction
+      ),
    })
 }
 
 // Success chain:
-const createSuccessChain = <TState, TStandardFailureAction extends Func, TFetchRequestAction extends Func, AreaActionType>(
-   area: Area<TState, TStandardFailureAction, AreaActionType>,
-   name: string,
-   requestAction: AreaAction<TState, TFetchRequestAction, AreaActionType>
-) => {
-   const successName = area.namePrefix + name + area.fetchPostfix[1]
-   //const failureName = area.namePrefix + name + area.fetchPostfix[2]
-   const doubleEmptyAction = produceMethodDoubleEmpty(name, successName, area.interceptSuccess, area.actionCreatorInterceptor)
-
+const createSuccessChain = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   TFetchRequestAction extends Func,
+   >(
+      area: Area<
+         TAppState,
+         TAppFailureAction,
+         TAppActionType,
+         TAreaState,
+         TAreaFailureAction,
+         TAreaActionType
+      >,
+      name: string,
+      requestAction: AreaAction<TAppState, TAreaState, TFetchRequestAction, TAppActionType & TAreaActionType>
+   ) => {
+   const successName = area.getSuccessName(name)
+   const doubleEmptyAction = produceMethodDoubleEmpty<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+      name, successName, area.appOptions.interceptSuccess, area.areaOptions.interceptSuccess
+   )
    return ({
       successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
-         const emptyProducer = produceMethodEmptyProducer(name, successName, successAction, area.interceptSuccess, area.actionCreatorInterceptor)
+         const emptyProducer = produceMethodEmptyProducer<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TSuccessAction>(
+            name, successName, successAction, area.appOptions.interceptSuccess, area.areaOptions.interceptSuccess
+         )
          return {
-            successProduce: (successProducer: (draft: Draft<TState>, action: ReturnTypeAction<TSuccessAction, AreaActionType>) => void) => {
-               let _successAction = produceMethod(name, successName, successAction, successProducer, area.interceptSuccess, area.actionCreatorInterceptor)
-               return createFailureChain<TState, TStandardFailureAction, TFetchRequestAction, TSuccessAction, AreaActionType>(area, name, requestAction, _successAction)
+            successProduce: (successProducer: (draft: Draft<TAppState & TAreaState>, action: ReturnTypeAction<TSuccessAction, TAppActionType & TAreaActionType>) => void) => {
+               let _successAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TSuccessAction>(
+                  name, successName, successAction, successProducer, area.appOptions.interceptSuccess, area.areaOptions.interceptSuccess
+               )
+               return createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TSuccessAction>(
+                  area, name, requestAction, _successAction
+               )
             },
-            ...createFailureChain<TState, TStandardFailureAction, TFetchRequestAction, TSuccessAction, AreaActionType>(area, name, requestAction, emptyProducer),
+            ...createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TSuccessAction>(
+               area, name, requestAction, emptyProducer
+            ),
          }
       },
-      successProduce: (successProducer: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void) => {
-         const fetchSuccessAction = produceMethodEmptyAction(name, successName, successProducer, area.interceptSuccess, area.actionCreatorInterceptor)
-         return createFailureChain<TState, TStandardFailureAction, TFetchRequestAction, EmptyAction<AreaActionType>, AreaActionType>(area, name, requestAction, fetchSuccessAction)
+      successProduce: (successProducer: (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void) => {
+         const fetchSuccessAction = produceMethodEmptyAction<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+            name, successName, successProducer, area.appOptions.interceptSuccess, area.areaOptions.interceptSuccess
+         )
+         return createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, EmptyAction<TAppActionType & TAreaActionType>>(
+            area, name, requestAction, fetchSuccessAction
+         )
       },
-      ...createFailureChain<TState, TStandardFailureAction, TFetchRequestAction, EmptyAction<AreaActionType>, AreaActionType>(area, name, requestAction, doubleEmptyAction)
+      ...createFailureChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, EmptyAction<TAppActionType & TAreaActionType>>(
+         area, name, requestAction, doubleEmptyAction
+      )
    })
 }
 
 // Failure chain:
-const createFailureChain = <TState, TStandardFailureAction extends Func, TFetchRequestAction extends Func, TFetchSuccessAction extends Func, AreaActionType>(
-   area: Area<TState, TStandardFailureAction, AreaActionType>,
-   name: string,
-   requestAction: AreaAction<TState, TFetchRequestAction, AreaActionType>,
-   successAction: AreaAction<TState, TFetchSuccessAction, AreaActionType>
-) => {
-   let _name = area.namePrefix + name + area.fetchPostfix[2]
+const createFailureChain = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   TFetchRequestAction extends Func,
+   TFetchSuccessAction extends Func,
+   >(
+      area: Area<
+         TAppState,
+         TAppFailureAction,
+         TAppActionType,
+         TAreaState,
+         TAreaFailureAction,
+         TAreaActionType
+      >,
+      name: string,
+      requestAction: AreaAction<TAppState, TAreaState, TFetchRequestAction, TAppActionType & TAreaActionType>,
+      successAction: AreaAction<TAppState, TAreaState, TFetchSuccessAction, TAppActionType & TAreaActionType>
+   ) => {
+   let failureName = area.getFailureName(name)
    return ({
-      standardFailure: () => {
-         if (area.standardFailureAction && area.standardFailureReducer) {
-            let failureAction = produceMethod(name, _name, area.standardFailureAction, area.standardFailureReducer, area.interceptFailure, area.actionCreatorInterceptor)
-            return finalizeChain<TState, TStandardFailureAction, TFetchRequestAction, TFetchSuccessAction, TStandardFailureAction, AreaActionType>(area, requestAction, successAction, failureAction)
+      appFailure: () => {
+         if (area.appOptions.appFailureAction && area.appOptions.appFailureProducer) {
+            let failureAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TAppFailureAction>(
+               name, failureName, area.appOptions.appFailureAction, area.appOptions.appFailureProducer, area.appOptions.interceptFailure, area.areaOptions.interceptFailure
+            )
+            return finalizeChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TFetchSuccessAction, TAppFailureAction>(
+               area, requestAction, successAction, failureAction
+            )
          }
-         throw new Error(`redux-area fetch method: ${name} tried to call standardFailureAction/standardFailureReducer, but the area didn't have one. Declare it with area.setStandardFetchFailure(action, producer)!`)
+         throw new Error(`redux-area fetch method: ${name} tried to call appFailureAction/appFailureReducer, but the app didn't have one. Declare it with Redux-area App settings`)
+      },
+      areaFailure: () => {
+         if (area.areaOptions.areaFailureAction && area.areaOptions.areaFailureProducer) {
+            let failureAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TAreaFailureAction>(
+               name, failureName, area.areaOptions.areaFailureAction, area.areaOptions.areaFailureProducer, area.appOptions.interceptFailure, area.areaOptions.interceptFailure
+            )
+            return finalizeChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TFetchSuccessAction, TAreaFailureAction>(
+               area, requestAction, successAction, failureAction
+            )
+         }
+         throw new Error(`redux-area fetch method: ${name} tried to call areaFailureAction/areaFailureReducer, but the area didn't have one. Declare it with Redux-area area settings`)
       },
       failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
          return {
-            failureProduce: (failureProducer: (draft: Draft<TState>, action: ReturnTypeAction<TFailureAction, AreaActionType>) => void) => {
-               const _failureAction = produceMethod(name, _name, failureAction, failureProducer, area.interceptFailure, area.actionCreatorInterceptor)
-               return finalizeChain<TState, TStandardFailureAction, TFetchRequestAction, TFetchSuccessAction, TFailureAction, AreaActionType>(area, requestAction, successAction, _failureAction)
+            failureProduce: (failureProducer: (draft: Draft<TAppState & TAreaState>, action: ReturnTypeAction<TFailureAction, TAppActionType & TAreaActionType>) => void) => {
+               const _failureAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFailureAction>(
+                  name, failureName, failureAction, failureProducer, area.appOptions.interceptFailure, area.areaOptions.interceptFailure
+               )
+               return finalizeChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TFetchSuccessAction, TFailureAction>(
+                  area, requestAction, successAction, _failureAction
+               )
             }
          }
       },
-      failureProduce: (failureProducer: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void) => {
-         const _name = area.namePrefix + name + area.fetchPostfix[2]
-         const _failureAction = produceMethodEmptyAction(name, _name, failureProducer, area.interceptFailure, area.actionCreatorInterceptor)
-         return finalizeChain<TState, TStandardFailureAction, TFetchRequestAction, TFetchSuccessAction, EmptyAction<AreaActionType>, AreaActionType>(area, requestAction, successAction, _failureAction)
+      failureProduce: (failureProducer: (draft: Draft<TAppState & TAreaState>, action: EmptyActionType<TAppActionType & TAreaActionType>) => void) => {
+         const _failureAction = produceMethodEmptyAction<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+            name, failureName, failureProducer, area.appOptions.interceptFailure, area.areaOptions.interceptFailure
+         )
+         return finalizeChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TFetchRequestAction, TFetchSuccessAction, EmptyAction<TAppActionType & TAreaActionType>>(
+            area, requestAction, successAction, _failureAction
+         )
       }
    })
 }
 
-const finalizeChain = <TState, TStandardFailureAction extends Func, TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchFailureAction extends Func, AreaActionType>(
-   area: Area<TState, TStandardFailureAction, AreaActionType>,
-   requestAction: AreaAction<TState, TFetchRequestAction, AreaActionType>,
-   successAction: AreaAction<TState, TFetchSuccessAction, AreaActionType>,
-   failureAction: AreaAction<TState, TFetchFailureAction, AreaActionType>
-) => {
+const finalizeChain = <
+   // Area stuff
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   // Other stuff
+   TFetchRequestAction extends Func,
+   TFetchSuccessAction extends Func,
+   TFetchFailureAction extends Func,
+   >(
+      area: Area<
+         TAppState,
+         TAppFailureAction,
+         TAppActionType,
+         TAreaState,
+         TAreaFailureAction,
+         TAreaActionType
+      >,
+      requestAction: AreaAction<TAppState, TAreaState, TFetchRequestAction, TAppActionType & TAreaActionType>,
+      successAction: AreaAction<TAppState, TAreaState, TFetchSuccessAction, TAppActionType & TAreaActionType>,
+      failureAction: AreaAction<TAppState, TAreaState, TFetchFailureAction, TAppActionType & TAreaActionType>
+   ) => {
    area.actions.push(requestAction as unknown as ReduxAction)
    area.actions.push(successAction as unknown as ReduxAction)
    area.actions.push(failureAction as unknown as ReduxAction)
@@ -260,38 +464,59 @@ const finalizeChain = <TState, TStandardFailureAction extends Func, TFetchReques
       request: requestAction,
       success: successAction,
       failure: failureAction
-   } as FetchAreaAction<TState, TFetchRequestAction, TFetchSuccessAction, TFetchFailureAction, AreaActionType>
+   } as FetchAreaAction<TAppState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchFailureAction, TAppActionType & TAreaActionType>
 }
 
-interface ICreateReduxAreaOptions<TState, AreaActionType> {
-   namePrefix?: string,
-   fetchPostfix?: string[]
-   interceptNormal?: TIntercept<TState, AreaActionType>
-   interceptRequest?: TIntercept<TState, AreaActionType>
-   interceptSuccess?: TIntercept<TState, AreaActionType>
-   interceptFailure?: TIntercept<TState, AreaActionType>
-}
 
-class Area<TState, TStandardFailureAction extends Func, AreaActionType> {
-   namePrefix = ''
-   fetchPostfix = ['Request', 'Success', 'Failure']
-   interceptNormal?: TIntercept<TState, AreaActionType> = undefined
-   interceptRequest?: TIntercept<TState, AreaActionType> = undefined
-   interceptSuccess?: TIntercept<TState, AreaActionType> = undefined
-   interceptFailure?: TIntercept<TState, AreaActionType> = undefined
-
+class Area<
+   TAppState,
+   TAppFailureAction extends Func,
+   TAppActionType extends any,
+   TAreaState,
+   TAreaFailureAction extends Func,
+   TAreaActionType extends any,
+   > {
    actions: ReduxAction[] = []
+   initialState: TAppState & TAreaState
+   namePrefix: string
+   requestNamePostfix: string
+   successNamePostfix: string
+   failureNamePostfix: string
 
    constructor(
-      public initialState: TState,
-      public standardFailureAction?: TStandardFailureAction,
-      public standardFailureReducer?: (draft: Draft<TState>, action: ReturnTypeAction<TStandardFailureAction, AreaActionType>) => void,
-      public actionCreatorInterceptor?: ActionCreatorInterceptor<AreaActionType>
+      public appOptions: IAppAreaOptions<TAppState, TAppFailureAction, TAppActionType>,
+      public areaOptions: IAreaOptions<TAppState, TAreaState, TAreaFailureAction, TAreaActionType>
    ) {
+      this.namePrefix = this.appOptions.appNamePrefix + this.areaOptions.namePrefix
+      if (this.appOptions.fetchPostfix) {
+         this.requestNamePostfix = this.appOptions.fetchPostfix[0]
+         this.successNamePostfix = this.appOptions.fetchPostfix[1]
+         this.failureNamePostfix = this.appOptions.fetchPostfix[2]
+      } else {
+         this.requestNamePostfix = 'Request'
+         this.successNamePostfix = 'Success'
+         this.failureNamePostfix = 'Failure'
+      }
+      this.initialState = {
+         ...appOptions.appState,
+         ...areaOptions.state
+      }
+   }
+
+   public getRequestName(name: string) {
+      return this.namePrefix + name + this.requestNamePostfix
+   }
+
+   public getSuccessName(name: string) {
+      return this.namePrefix + name + this.successNamePostfix
+   }
+
+   public getFailureName(name: string) {
+      return this.namePrefix + name + this.failureNamePostfix
    }
 
    public rootReducer() {
-      return (state: TState = this.initialState, action: AnyAction) => {
+      return (state: TAreaState = this.initialState, action: AnyAction) => {
          const actionArea = this.actions.find(x => x.name === action.type)
          if (actionArea) {
             if (actionArea.intercept) {
@@ -309,35 +534,39 @@ class Area<TState, TStandardFailureAction extends Func, AreaActionType> {
     * You can omit 'action' if its not needed. \
     * 'produce' uses [immer](https://immerjs.github.io/immer/docs/introduction) (always recommended) \
     * 'reducer' will create a normal reducer
-    * @param name 
+    * @param name
     */
    public add(name: string) {
       const _name = this.namePrefix + name
       return ({
-         produce: (producer: (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void) => {
-            const mappedAction = produceMethodEmptyAction(name, _name, producer, this.interceptNormal, this.actionCreatorInterceptor)
+         produce: (producer: (draft: Draft<TAreaState>, action: EmptyActionType<TAreaActionType>) => void) => {
+            const mappedAction = produceMethodEmptyAction<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(
+               name, _name, producer, this.appOptions.interceptNormal, this.areaOptions.interceptNormal
+            )
             this.actions.push(mappedAction as unknown as ReduxAction)
             return mappedAction
          },
          reducer: (
-            reducer: (state: TState, reducerAction: EmptyActionType<AreaActionType>) => any | void
+            reducer: (state: TAreaState, reducerAction: EmptyActionType<TAreaActionType>) => any | void
          ) => {
-            const mappedAction = reduceMethodEmpty<TState, AreaActionType>(_name, reducer, this.interceptNormal)
+            const mappedAction = reduceMethodEmpty<TAreaState, TAreaActionType>(_name, reducer)
             this.actions.push(mappedAction as unknown as ReduxAction)
             return mappedAction
          },
          action: <TAction extends Func>(action: TAction) => {
-            type MappedAction = ReturnTypeAction<TAction, AreaActionType>
+            type MappedAction = ReturnTypeAction<TAction, TAreaActionType>
             return {
-               produce: (producer: (draft: Draft<TState>, action: MappedAction) => void) => {
-                  const mappedAction = produceMethod(name, _name, action, producer, this.interceptNormal, this.actionCreatorInterceptor)
+               produce: (producer: (draft: Draft<TAreaState>, action: MappedAction) => void) => {
+                  const mappedAction = produceMethod<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType, TAction>(
+                     name, _name, action, producer, this.appOptions.interceptNormal, this.areaOptions.interceptNormal
+                  )
                   this.actions.push(mappedAction as unknown as ReduxAction)
                   return mappedAction
                },
                reducer: (
-                  reducer: (state: TState, reducerAction: MappedAction) => any | void
+                  reducer: (state: TAreaState, reducerAction: MappedAction) => any | void
                ) => {
-                  const mappedAction = reduceMethod(action, reducer, this.interceptNormal)
+                  const mappedAction = reduceMethod(action, reducer)
                   this.actions.push(mappedAction as unknown as ReduxAction)
                   return mappedAction
                }
@@ -349,114 +578,92 @@ class Area<TState, TStandardFailureAction extends Func, AreaActionType> {
    /**
     * Add 3 action (Request, success and failure). \
     * Optional 'interceptRequest', 'interceptSuccess' and 'interceptFailure' in options will effect this. \
-    * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final standardFailure of produceFailure) \
-    * @param name 
+    * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final areaFailure of produceFailure) \
+    * @param name
     */
    public addFetch(name: string) {
-      return createRequestChain<TState, TStandardFailureAction, AreaActionType>(this, name)
+      return createRequestChain<TAppState, TAppFailureAction, TAppActionType, TAreaState, TAreaFailureAction, TAreaActionType>(this, name)
    }
-
-   public options(options: ICreateReduxAreaOptions<TState, AreaActionType>) {
-      if (options.namePrefix !== undefined) {
-         this.namePrefix = options.namePrefix
-      }
-      if (options.fetchPostfix !== undefined) {
-         this.fetchPostfix = options.fetchPostfix
-      }
-      if (options.interceptNormal !== undefined) {
-         this.interceptNormal = options.interceptNormal
-      }
-      if (options.interceptRequest !== undefined) {
-         this.interceptRequest = options.interceptRequest
-      }
-      if (options.interceptSuccess !== undefined) {
-         this.interceptSuccess = options.interceptSuccess
-      }
-      if (options.interceptFailure !== undefined) {
-         this.interceptFailure = options.interceptFailure
-      }
-      return this
-   }
-
-   /**
-    * Add StandardFailure method. \
-    * Is set the standardFailure for 'addFetch' will be enabled. \
-    * Not this method must be chain directly on the CreateReduxArea to work correct. \
-    * (Due to the way typescript calculate interfaces) \
-    * @example
-    * const area = CreateReduxArea({ loading: true })
-    *    .option({...})
-    *    .setStandardFetchFailure(action, producer);
-    * // OR
-    * const area = CreateReduxArea({ loading: true })
-    *    .setStandardFetchFailure(action, producer);
-    * // DON'T DO:
-    * area.setStandardFetchFailure(action, producer); // Will NOT work
-    * area = area.setStandardFetchFailure(action, producer); // Will NOT work
-    * @param action 
-    * @param producer 
-    */
-   public setStandardFetchFailure<TNewStandardAction extends Func>(
-      action: TNewStandardAction,
-      producer: (draft: Draft<TState>, action: ReturnTypeAction<TNewStandardAction, AreaActionType>) => void
-   ) {
-      const a = new Area<TState, TNewStandardAction, AreaActionType>(
-         this.initialState,
-         action,
-         producer,
-         this.actionCreatorInterceptor
-      )
-      a.interceptNormal = this.interceptNormal as TIntercept<TState, AreaActionType> | undefined
-      a.interceptFailure = this.interceptFailure as TIntercept<TState, AreaActionType> | undefined
-      a.interceptRequest = this.interceptRequest as TIntercept<TState, AreaActionType> | undefined
-      a.interceptSuccess = this.interceptSuccess as TIntercept<TState, AreaActionType> | undefined
-      a.namePrefix = this.namePrefix
-      a.fetchPostfix = [...this.fetchPostfix]
-      return a
-   }
-
-   /**
- * Add StandardFailure method. \
- * Is set the standardFailure for 'addFetch' will be enabled. \
- * Not this method must be chain directly on the CreateReduxArea to work correct. \
- * (Due to the way typescript calculate interfaces) \
- * @example
- * const area = CreateReduxArea({ loading: true })
- *    .option({...})
- *    .setStandardFetchFailure(action, producer);
- * // OR
- * const area = CreateReduxArea({ loading: true })
- *    .setStandardFetchFailure(action, producer);
- * // DON'T DO:
- * area.setStandardFetchFailure(action, producer); // Will NOT work
- * area = area.setStandardFetchFailure(action, producer); // Will NOT work
- * @param action 
- * @param producer 
- */
-   public addActionCreatorInterception<TNewAreaActionType extends any>(
-      interceptor: ActionCreatorInterceptor<TNewAreaActionType>,
-   ) {
-      const b = new Area<TState, TStandardFailureAction, TNewAreaActionType>(
-         this.initialState,
-         this.standardFailureAction,
-         this.standardFailureReducer,
-         interceptor
-      )
-      b.interceptNormal = this.interceptNormal as TIntercept<TState, TNewAreaActionType> | undefined
-      b.interceptFailure = this.interceptFailure as TIntercept<TState, TNewAreaActionType> | undefined
-      b.interceptRequest = this.interceptRequest as TIntercept<TState, TNewAreaActionType> | undefined
-      b.interceptSuccess = this.interceptSuccess as TIntercept<TState, TNewAreaActionType> | undefined
-      b.namePrefix = this.namePrefix
-      b.fetchPostfix = [...this.fetchPostfix]
-      return b
-   }
-
 }
 
 
-// -----------
-const CreateReduxArea = <TState>(initialState: TState) => {
-   return new Area(initialState)
+interface IAppAreaOptions<
+   TAppAreaState,
+   TAppStandardFailure extends Func,
+   TAppAreaActionType extends any
+   > {
+   appNamePrefix: string,
+   appState: TAppAreaState
+   appFailureAction?: TAppStandardFailure,
+   appFailureProducer?: (draft: Draft<TAppAreaState>, action: ReturnType<TAppStandardFailure>) => void
+   appActionInterceptor?: ActionCreatorInterceptor<TAppAreaActionType>
+   fetchPostfix?: string[]
+   interceptNormal?: TIntercept<TAppAreaState, TAppAreaActionType>[]
+   interceptRequest?: TIntercept<TAppAreaState, TAppAreaActionType>[]
+   interceptSuccess?: TIntercept<TAppAreaState, TAppAreaActionType>[]
+   interceptFailure?: TIntercept<TAppAreaState, TAppAreaActionType>[]
 }
 
-export default CreateReduxArea
+interface IAreaOptions<
+   TAppState,
+   TAreaState,
+   TAreaStandardFailure extends Func,
+   TAreaActionType extends any,
+   TTotalState = TAppState & TAreaState
+   > {
+   areaFailureAction?: TAreaStandardFailure,
+   areaFailureProducer?: (draft: Draft<TTotalState>, action: ReturnType<TAreaStandardFailure>) => void,
+
+   actionInterceptor?: ActionCreatorInterceptor<TAreaActionType>,
+   namePrefix: string,
+   state: TAreaState,
+   interceptNormal?: TIntercept<TTotalState, TAreaActionType>[]
+   interceptRequest?: TIntercept<TTotalState, TAreaActionType>[]
+   interceptSuccess?: TIntercept<TTotalState, TAreaActionType>[]
+   interceptFailure?: TIntercept<TTotalState, TAreaActionType>[]
+}
+
+class AppArea<TAppState, TAppFailureAction extends Func, TAreaActionType extends any>{
+   constructor(
+      public appOptions: IAppAreaOptions<TAppState, TAppFailureAction, TAreaActionType>
+   ) {
+   }
+   public AddArea<TAreaState, TAreaStandardFailure extends Func, TAreaActionType extends any>(
+      areaOptions: IAreaOptions<TAppState, TAreaState, TAreaStandardFailure, TAreaActionType>
+   ) {
+      return new Area(
+         this.appOptions,
+         areaOptions
+      )
+   }
+}
+
+export var BaseGlobal = (appName = "App") => new AppArea({
+   appNamePrefix: "@@" + appName,
+   appState: {
+      loading: false,
+      loadingMap: {} as { [key: string]: boolean },
+      error: undefined as Error | undefined,
+      errorMessage: ''
+   },
+   appFailureAction: (error: Error) => ({ error }),
+   appFailureProducer: ((draft, { error }) => {
+      draft.error = error
+      draft.errorMessage = error.message
+   }),
+   appActionInterceptor: (act: ReduxAreaAnyAction) => ({}),
+   interceptRequest: [(draft, { shortType }) => {
+      draft.loading = true
+      draft.loadingMap[shortType] = true
+   }],
+   interceptSuccess: [(draft, { shortType }) => {
+      draft.loading = false
+      draft.loadingMap[shortType] = false
+   }],
+   interceptFailure: [(draft, action) => {
+      draft.loading = false
+      draft.loadingMap[action.shortType] = false
+   }]
+})
+
+export default AppArea
