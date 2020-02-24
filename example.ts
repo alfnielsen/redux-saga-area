@@ -1,4 +1,4 @@
-import CreateReduxArea from "./ReduxArea"
+import { FetchAreaBase } from "./ReduxArea"
 
 // Optional state interface.
 // You can also get it from (typeof area.initialState)
@@ -10,32 +10,15 @@ export interface IMyAreaState {
    readonly types: string[]
 }
 
-const area = CreateReduxArea<IMyAreaState>({
-   name: '',
-   lastCall: '',
-   loading: false,
-   types: []
-}).options({
-   namePrefix: '@@MyApp/MyArea/',
-   fetchPostfix: ['Request', 'Success', 'Failure'],
-   interceptNormal: (draft, { type }) => {
-      draft.lastCall = type
-   },
-   interceptRequest: (draft) => {
-      draft.loading = true
-   },
-   interceptSuccess: (draft) => {
-      draft.loading = false
-   },
-   interceptFailure: (draft) => {
-      draft.loading = false
-   }
-}).setStandardFetchFailure(
-   (error: Error) => ({ error }),
-   (draft, { error }) => {
-      draft.error = error
-   }
-)
+const area = FetchAreaBase("@@MyApp").CreateArea({
+   namePrefix: "MyArea",
+   state: {
+      name: '',
+      lastCall: '',
+      types: []
+   } as IMyAreaState
+})
+
 
 const getAllType = area
    .addFetch('getAllType')
@@ -88,7 +71,7 @@ const getAllTypes = area
       draft.name = name
       draft.loading = false
    })
-   .standardFailure()
+   .baseFailure()
 
 
 export type UpdateNameType = typeof updateName.type
