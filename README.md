@@ -15,10 +15,7 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 
 Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
 
-Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
-_(More demos in the bottom)_
-
-[Documentation](https://github.com/alfnielsen/redux-area/wiki)
+See GibHub Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki).
 
 **The goal is:** to ease and reduce the amount of code we need to write to get all benefits of both
 
