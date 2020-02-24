@@ -491,7 +491,7 @@ class Area<
    failureNamePostfix: string
 
    constructor(
-      public baseOptions: IBaseAreaOptions<TBaseState, TBaseFailureAction, TBaseActionType>,
+      public baseOptions: IAreaBaseOptions<TBaseState, TBaseFailureAction, TBaseActionType>,
       public areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaFailureAction, TAreaActionType>
    ) {
       if (this.baseOptions.addNameSlashes) {
@@ -544,7 +544,6 @@ class Area<
 
    public rootReducer() {
       return (state: TAreaState = this.initialState, action: AnyAction) => {
-         console.log(this.initialState)
          const actionArea = this.actions.find(x => x.name === action.type)
          if (actionArea) {
             if (actionArea.intercept) {
@@ -615,23 +614,23 @@ class Area<
 }
 
 
-interface IBaseAreaOptions<
-   TBaseAreaState,
+interface IAreaBaseOptions<
+   TAreaBaseState,
    TBaseStandardFailure extends Func,
-   TBaseAreaActionType extends any
+   TAreaBaseActionType extends any
    > {
    baseNamePrefix: string,
    addNameSlashes?: boolean,
    addShortNameSlashes?: boolean,
-   baseState: TBaseAreaState
+   baseState: TAreaBaseState
    baseFailureAction?: TBaseStandardFailure,
-   baseFailureProducer?: (draft: Draft<TBaseAreaState>, action: ReturnType<TBaseStandardFailure>) => void
-   baseActionInterceptor?: ActionCreatorInterceptor<TBaseAreaActionType>
+   baseFailureProducer?: (draft: Draft<TAreaBaseState>, action: ReturnType<TBaseStandardFailure>) => void
+   baseActionInterceptor?: ActionCreatorInterceptor<TAreaBaseActionType>
    fetchPostfix?: string[]
-   baseInterceptNormal?: TIntercept<TBaseAreaState, TBaseAreaActionType>[]
-   baseInterceptRequest?: TIntercept<TBaseAreaState, TBaseAreaActionType>[]
-   baseInterceptSuccess?: TIntercept<TBaseAreaState, TBaseAreaActionType>[]
-   baseInterceptFailure?: TIntercept<TBaseAreaState, TBaseAreaActionType>[]
+   baseInterceptNormal?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+   baseInterceptRequest?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+   baseInterceptSuccess?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+   baseInterceptFailure?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
 }
 
 interface IAreaOptions<
@@ -653,12 +652,12 @@ interface IAreaOptions<
    interceptFailure?: TIntercept<TTotalState, TAreaActionType>[]
 }
 
-class BaseArea<TBaseState, TBaseFailureAction extends Func, TAreaActionType extends any>{
+class AreaBase<TBaseState, TBaseFailureAction extends Func, TAreaActionType extends any>{
    constructor(
-      public baseOptions: IBaseAreaOptions<TBaseState, TBaseFailureAction, TAreaActionType>
+      public baseOptions: IAreaBaseOptions<TBaseState, TBaseFailureAction, TAreaActionType>
    ) {
    }
-   public AddArea<TAreaState, TAreaStandardFailure extends Func, TAreaActionType extends any>(
+   public CreateArea<TAreaState, TAreaStandardFailure extends Func, TAreaActionType extends any>(
       areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaStandardFailure, TAreaActionType>
    ) {
       return new Area(
@@ -668,21 +667,21 @@ class BaseArea<TBaseState, TBaseFailureAction extends Func, TAreaActionType exte
    }
 }
 
-export interface IReduxAreaBaseGlobalState {
+export interface IFetchAreaBaseState {
    loading: boolean,
    loadingMap: { [key: string]: boolean },
    error?: Error,
    errorMessage: string,
 }
 
-export var SimpleBaseArea = (baseName = "App") => new BaseArea({
+export var SimpleAreaBase = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,
    addNameSlashes: true,
    addShortNameSlashes: true,
    baseState: {}
 })
 
-export var FetchBaseGlobal = (baseName = "App") => new BaseArea({
+export var FetchAreaBase = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,
    addNameSlashes: true,
    addShortNameSlashes: true,
@@ -691,7 +690,7 @@ export var FetchBaseGlobal = (baseName = "App") => new BaseArea({
       loadingMap: { initialized: true },
       error: undefined,
       errorMessage: ''
-   } as IReduxAreaBaseGlobalState,
+   } as IFetchAreaBaseState,
    baseFailureAction: (error: Error) => ({ error }),
    baseFailureProducer: ((draft, { error }) => {
       draft.error = error
@@ -712,4 +711,4 @@ export var FetchBaseGlobal = (baseName = "App") => new BaseArea({
    }]
 })
 
-export default BaseArea
+export default AreaBase
