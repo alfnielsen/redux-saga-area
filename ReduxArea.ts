@@ -687,7 +687,7 @@ export var FetchBaseArea = (appName = "App") => new AppArea({
    addShortNameSlashes: true,
    appState: {
       loading: false,
-      loadingMap: { initialized: true },
+      loadingMap: {},
       error: undefined,
       errorMessage: ''
    } as IReduxAreaBaseGlobalState,
