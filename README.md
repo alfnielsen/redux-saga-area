@@ -13,9 +13,11 @@ It uses the [immer](https://github.com/immerjs/immer) npm module for keeping the
 
 > You can create normal reducers if you need them
 
-Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/redux-area](https://www.npmjs.com/package/redux-area)
+Github [Source](https://github.com/alfnielsen/redux-area) Code
 
-See GibHub Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki).
+The npm [package](https://www.npmjs.com/package/redux-area)
+
+See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki).
 
 **The goal is:** to ease and reduce the amount of code we need to write to get all benefits of both
 
