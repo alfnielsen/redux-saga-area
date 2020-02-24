@@ -1,3 +1,98 @@
+## 0.4.0
+
+Add AreaBase.
+
+This version is a total new version. Each Area now has AreaBase.
+
+Redux-area provides 2 AreaBases, but its now possible to create custom AreaBase,
+that can share Standard Failure (now called baseFailure and areaFailure), interceptions,
+and global area settings.
+
+### New options:
+
+There are now interception from the base and from the area (interceptions is a list, so they can be generalized and added multiple places)
+
+All action has now `actionName` beside the `type`
+
+`fetchPostfix` is now defined in the base.
+
+`addNameSlashes` and `addShortNameSlashes` add slashes between auto generated name part.
+
+(`baseActionInterceptor` and `actionInterceptor`, action interception, is still in feature development)
+
+The BaseAreaOptions and the AreaOptions is defined as following:
+
+```ts
+interface IAreaBaseOptions<
+  TAreaBaseState,
+  TBaseStandardFailure extends Func,
+  TAreaBaseActionType extends any
+> {
+  baseNamePrefix: string
+  addNameSlashes?: boolean
+  addShortNameSlashes?: boolean
+  fetchPostfix?: string[]
+  baseState: TAreaBaseState
+  baseFailureAction?: TBaseStandardFailure
+  baseFailureProducer?: (
+    draft: Draft<TAreaBaseState>,
+    action: ReturnType<TBaseStandardFailure>
+  ) => void
+  baseActionInterceptor?: ActionCreatorInterceptor<TAreaBaseActionType>
+  baseInterceptNormal?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+  baseInterceptRequest?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+  baseInterceptSuccess?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+  baseInterceptFailure?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
+}
+
+interface IAreaOptions<
+  TBaseState,
+  TAreaState,
+  TAreaStandardFailure extends Func,
+  TAreaActionType extends any,
+  TTotalState = TBaseState & TAreaState
+> {
+  namePrefix: string
+  state: TAreaState
+  areaFailureAction?: TAreaStandardFailure
+  areaFailureProducer?: (
+    draft: Draft<TTotalState>,
+    action: ReturnType<TAreaStandardFailure>
+  ) => void
+  actionInterceptor?: ActionCreatorInterceptor<TAreaActionType>
+  interceptNormal?: TIntercept<TTotalState, TAreaActionType>[]
+  interceptRequest?: TIntercept<TTotalState, TAreaActionType>[]
+  interceptSuccess?: TIntercept<TTotalState, TAreaActionType>[]
+  interceptFailure?: TIntercept<TTotalState, TAreaActionType>[]
+}
+```
+
+### Breaking changes
+
+The CreateReduxArea method is replaced by AreaBases.
+
+The Area base don't takes a direct generic state interface (Like CreateReduxArea<MyState>),
+instead the AreaBase take an option object with a `state` prop.
+
+`area.options` and `setStandardFailure` is **removed**.
+
+Both can be defined in the BaseArea option and the Area option.
+
+Use `as MyStateInterface` instead:
+
+```ts
+const area = FetchAreaBase("@@MyApp").CreateArea({
+  namePrefix: "MyArea",
+  state: {
+    name: "",
+    lastCall: "",
+    types: []
+  } as IMyAreaState
+})
+```
+
+`standardFailure` has been replaced with `baseFailure` and `areaFailure`
+
 ## 0.3.1
 
 Add `shortType` to all actions.

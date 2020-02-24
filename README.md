@@ -7,7 +7,6 @@
 - [Immer](#Immer)
 - [Demo](#Demo)
 
-
 ## Description
 
 **Short:** `Simplified strongly typed redux`
@@ -28,8 +27,7 @@ Source: [github/redux-area](https://github.com/alfnielsen/redux-area) | [npm/red
 Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
 _(More demos in the bottom)_
 
-Fell free to add issue's in the git repository if you have examples of what would work well for your project.
-At the moment there is added experimental interception features in the @next version.
+[Documentation](https://github.com/alfnielsen/redux-area/wiki)
 
 **The goal is:** to ease and reduce the amount of code we need to write to get all benefits of both
 
@@ -45,9 +43,9 @@ In redux-area we will talk about:
 
 This is an `action creator`, a method the generate an redux action, which is a plain object with at least a `type: string` property.
 
-From version 0.3.1, redux-area will also include `shortType: string`
+From version 0.3.1, redux-area will also include `actionName: string`
 
-Redux-area calculate the interface for each action by making a union of the result of an action cretor and adding the `type` and `shortType` under the hood _(plus the result of action interceptions, if is added to the redux-area)_
+Redux-area calculate the interface for each action by making a union of the result of an action creator and adding the `type` and `actionName` under the hood _(plus the result of action interceptions, if is added to the redux-area)_
 
 - produce (comes from the [immer](https://github.com/immerjs/immer) project).
 
@@ -252,7 +250,6 @@ area.options({
 })
 ```
 
-
 ### Add Actions
 
 You can now add actions to the area:
@@ -266,15 +263,12 @@ const updateName = area
   .produce((draft, { name }) => {
     draft.name = name
   })
-const getNames = area
-  .add("getName")
-  .produce((draft, { names }) => {
-    draft.name = names
-  })
+const getNames = area.add("getName").produce((draft, { names }) => {
+  draft.name = names
+})
 ```
 
 Your can ommit 'action' if its not needed; the action will still created as an empty action.
-
 
 redux-area will use typescript's generic `ReturnType` and `Parameters` to
 calculate how the actions interface are, by extracting the return from the actionCreator.
