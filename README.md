@@ -1,14 +1,5 @@
 # Redux-area
 
-- [Description](#Description)
-- [Usage](#Usage)
-- [Install](#Install)
-- [Features](#Features)
-- [Immer](#Immer)
-- [Demo](#Demo)
-
-## Description
-
 **Short:** `Simplified strongly typed redux`
 
 When defining redux actions and reducers with typescript,
