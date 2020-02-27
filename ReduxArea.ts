@@ -3,7 +3,7 @@ import { AnyAction, Reducer } from 'redux'
 
 export type Func = (...args: any) => any
 export type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer; intercept?: Reducer }
-export type ReduxAreaAnyAction = { type: string, actionName: string, actionTags: string[] }
+export type ReduxAreaAnyAction = { type: string, actionName: string/*, actionTags: string[] */ }
 export type EmptyActionType<AreaActionType> = ReduxAreaAnyAction & AreaActionType
 export type EmptyAction<AreaActionType> = () => EmptyActionType<AreaActionType>
 export type ReturnTypeAction<T extends Func, AreaActionType> = ReturnType<T> & EmptyActionType<AreaActionType>
@@ -55,10 +55,15 @@ class Area<
          TAreaActionType
       >
    ) {
-      if (this.baseOptions.addNameSlashes) {
-         this.namePrefix = this.baseOptions.baseNamePrefix + "/" + this.areaOptions.namePrefix
-      } else {
-         this.namePrefix = this.baseOptions.baseNamePrefix + this.areaOptions.namePrefix
+      this.namePrefix = ""
+      if (this.baseOptions.baseNamePrefix) {
+         this.namePrefix += this.baseOptions.baseNamePrefix
+      }
+      if (this.areaOptions.namePrefix) {
+         if (this.baseOptions.addNameSlashes) {
+            this.namePrefix += "/"
+         }
+         this.namePrefix += this.areaOptions.namePrefix
       }
       if (this.baseOptions.namePostfix) {
          this.normalNamePostfix = this.baseOptions.namePostfix[0]
@@ -95,6 +100,9 @@ class Area<
 
 
    public getActionName(name: string) {
+      if (!this.namePrefix) {
+         return name
+      }
       if (this.baseOptions.addNameSlashes) {
          return this.namePrefix + "/" + name
       }
@@ -102,24 +110,27 @@ class Area<
    }
 
    public getRequestName(name: string) {
+      name = this.getActionName(name)
       if (this.baseOptions.addNameSlashes) {
-         return this.namePrefix + "/" + name + "/" + this.requestNamePostfix
+         name += "/"
       }
-      return this.namePrefix + name + this.requestNamePostfix
+      return name + this.requestNamePostfix
    }
 
    public getSuccessName(name: string) {
+      name = this.getActionName(name)
       if (this.baseOptions.addNameSlashes) {
-         return this.namePrefix + "/" + name + "/" + this.successNamePostfix
+         name += "/"
       }
-      return this.namePrefix + name + this.successNamePostfix
+      return name + this.successNamePostfix
    }
 
    public getFailureName(name: string) {
+      name = this.getActionName(name)
       if (this.baseOptions.addNameSlashes) {
-         return this.namePrefix + "/" + name + "/" + this.failureNamePostfix
+         name += "/"
       }
-      return this.namePrefix + name + this.failureNamePostfix
+      return this.failureNamePostfix
    }
 
    public rootReducer() {
@@ -144,7 +155,7 @@ class Area<
     * @param name
     */
    public add(name: string, tags: string[] = []) {
-      return this.createAddChain(name, ["Normal", ...tags])
+      return this.createAddChain(name, ["All", "Normal", ...tags])
    }
 
    /**
@@ -154,7 +165,7 @@ class Area<
     * @param name
     */
    public addFetch(name: string, tags: string[] = []) {
-      return this.createRequestChain(name, ["Fetch", ...tags])
+      return this.createRequestChain(name, ["All", "Fetch", ...tags])
    }
 
    protected produceMethod = <
@@ -176,7 +187,7 @@ class Area<
             ...actionResult,
             type: name,
             actionName,
-            actionTags
+            //actionTags
          } as ReduxAreaAnyAction
          baseActionIntercept && (baseActionResult = { ...baseActionResult, ...baseActionIntercept(baseActionResult) })
          areaActionIntercept && (baseActionResult = { ...baseActionResult, ...areaActionIntercept(baseActionResult) })
@@ -518,12 +529,6 @@ class Area<
       } as FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchFailureAction, TBaseActionType & TAreaActionType>
    }
 
-
-
-
-
-
-
 }
 
 
@@ -532,7 +537,7 @@ interface IAreaBaseOptions<
    TBaseStandardFailure extends Func,
    TBaseActionTypeAll
    > {
-   baseNamePrefix: string,
+   baseNamePrefix?: string,
    addNameSlashes?: boolean,
    addShortNameSlashes?: boolean,
    baseState: TBaseState
@@ -555,10 +560,9 @@ interface IAreaOptions<
    > {
    areaFailureAction?: TAreaFailureAction,
    areaFailureProducer?: (draft: Draft<TTotalState>, action: ReturnType<TAreaFailureAction>) => void,
-
    actionInterceptor?: ActionCreatorInterceptor<TTotalActionTypeAll>,
-
-   namePrefix: string,
+   namePrefix?: string,
+   tags?: string[],
    state: TAreaState,
    tagInterceptors?: { [tag: string]: TIntercept<TTotalState, TTotalActionTypeAll>[] }
 }
@@ -624,9 +628,6 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
    baseFailureProducer: ((draft, { error }) => {
       draft.error = error
       draft.errorMessage = error.message
-   }),
-   baseActionInterceptor: action => ({
-      per: 22
    }),
    baseInterceptors: {
       "Request": [(draft, { actionName }) => {
