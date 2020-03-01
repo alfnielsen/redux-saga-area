@@ -159,7 +159,7 @@ class Area<
     * @param name
     */
    public add(name: string, tags: string[] = []) {
-      return this.createAddChain(name, ["All", "Normal", ...tags])
+      return this.createAddChain(name, ["All", "Normal", ...(this.areaOptions.tags || []), ...tags])
    }
 
    /**
@@ -169,7 +169,7 @@ class Area<
     * @param name
     */
    public addFetch(name: string, tags: string[] = []) {
-      return this.createRequestChain(name, ["All", "Fetch", ...tags])
+      return this.createRequestChain(name, ["All", "Fetch", ...(this.areaOptions.tags || []), ...tags])
    }
 
    protected produceMethod = <
