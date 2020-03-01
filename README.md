@@ -1,7 +1,7 @@
 # Redux-area
-_version 0.4.0_
-
 **Short:** `Simplified strongly typed redux`
+
+_(version 0.4.0)_
 
 When defining redux actions and reducers with typescript,
 you often need a lot of typing for interfaces to ensure that you can use your actions,
