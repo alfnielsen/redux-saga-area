@@ -69,11 +69,11 @@ class Area<
          }
          this.namePrefix += this.areaOptions.namePrefix
       }
-      if (this.baseOptions.namePostfix) {
-         this.normalNamePostfix = this.baseOptions.namePostfix[0]
-         this.requestNamePostfix = this.baseOptions.namePostfix[1]
-         this.successNamePostfix = this.baseOptions.namePostfix[2]
-         this.failureNamePostfix = this.baseOptions.namePostfix[3]
+      if (this.baseOptions.fetchNamePostfix) {
+         this.normalNamePostfix = this.baseOptions.fetchNamePostfix[0]
+         this.requestNamePostfix = this.baseOptions.fetchNamePostfix[1]
+         this.successNamePostfix = this.baseOptions.fetchNamePostfix[2]
+         this.failureNamePostfix = this.baseOptions.fetchNamePostfix[3]
       } else {
          this.normalNamePostfix = 'Normal'
          this.requestNamePostfix = 'Request'
@@ -184,7 +184,7 @@ class Area<
       let [baseIntercept, areaIntercept] = this.findTagsInterceptors(actionTags)
 
       const baseActionIntercept = this.baseOptions.baseActionsIntercept
-      const areaActionIntercept = this.areaOptions.actionInterceptor
+      const areaActionIntercept = this.areaOptions.actionIntercept
       const actionCreator = (...args: Parameters<TAction>) => {
          let actionResult = action.apply(null, args)
          let baseActionResult = {
@@ -534,23 +534,23 @@ class Area<
 }
 
 
-interface IAreaBaseOptions<
+export interface IAreaBaseOptions<
    TBaseState,
    TBaseStandardFailure extends Func,
    TBaseActionsIntercept extends ActionCreatorInterceptor
    > {
    baseState: TBaseState
-   baseActionsIntercept?: TBaseActionsIntercept, //(options: ActionCreatorInterceptorOptions) => TBaseActionType
-   baseInterceptors?: { [tag: string]: TIntercept<TBaseState, ReturnType<TBaseActionsIntercept>>[] }
-   namePostfix?: string[]
    baseNamePrefix?: string,
+   fetchNamePostfix?: string[]
    addNameSlashes?: boolean,
    addShortNameSlashes?: boolean,
    baseFailureAction?: TBaseStandardFailure,
    baseFailureProducer?: (draft: Draft<TBaseState>, action: ReturnType<TBaseStandardFailure>) => void
+   baseInterceptors?: { [tag: string]: TIntercept<TBaseState, ReturnType<TBaseActionsIntercept>>[] }
+   baseActionsIntercept?: TBaseActionsIntercept,
 }
 
-interface IAreaOptions<
+export interface IAreaOptions<
    TBaseState,
    TAreaState,
    TAreaFailureAction extends Func,
@@ -559,13 +559,13 @@ interface IAreaOptions<
    TBaseActionType = ReturnType<TBaseActionsIntercept>,
    TAreaActionType = ReturnType<TAreaActionsIntercept>
    > {
-   areaFailureAction?: TAreaFailureAction,
-   areaFailureProducer?: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAreaFailureAction>) => void,
+   state: TAreaState,
    namePrefix?: string,
    tags?: string[],
-   state: TAreaState,
-   actionInterceptor?: TAreaActionsIntercept, // (options: ActionCreatorInterceptorOptions) => TBaseActionType,
+   areaFailureAction?: TAreaFailureAction,
+   areaFailureProducer?: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAreaFailureAction>) => void,
    areaInterceptors?: { [tag: string]: TIntercept<TBaseState & TAreaState, TBaseActionType & TAreaActionType>[] }
+   actionIntercept?: TAreaActionsIntercept,
 }
 
 class AreaBase<
@@ -608,14 +608,48 @@ export interface IFetchAreaBaseState {
    errorMessage: string,
 }
 
-// export var SimpleAreaBase = (baseName = "App") => new AreaBase({
-//    baseNamePrefix: "@@" + baseName,
-//    addNameSlashes: true,
-//    addShortNameSlashes: true,
-//    baseState: {}
-// })
+export var SimpleAreaBase = (baseName = "App") => new AreaBase({
+   baseNamePrefix: "@@" + baseName,
+   addNameSlashes: true,
+   addShortNameSlashes: true,
+   baseState: {}
+})
 
 export var FetchAreaBase = (baseName = "App") => new AreaBase({
+   baseNamePrefix: "@@" + baseName,
+   addNameSlashes: true,
+   addShortNameSlashes: true,
+   baseState: {
+      loading: false,
+      loadingMap: {},
+      error: undefined,
+      errorMessage: ''
+   } as IFetchAreaBaseState,
+   baseFailureAction: (error: Error) => ({ error }),
+   baseFailureProducer: ((draft, { error }) => {
+      draft.error = error
+      draft.errorMessage = error.message
+   }),
+   baseActionsIntercept: ({ actionName }: ActionCreatorInterceptorOptions) => ({
+      actionName
+   }),
+   baseInterceptors: {
+      "Request": [(draft, { actionName }) => {
+         draft.loading = true
+         draft.loadingMap[actionName] = true
+      }],
+      "Success": [(draft, { actionName }) => {
+         draft.loading = false
+         draft.loadingMap[actionName] = false
+      }],
+      "Failure": [(draft, { actionName }) => {
+         draft.loading = false
+         draft.loadingMap[actionName] = false
+      }]
+   }
+})
+
+export var FetchAreaBaseWithTags = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,
    addNameSlashes: true,
    addShortNameSlashes: true,
@@ -635,9 +669,6 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
       actionTags
    }),
    baseInterceptors: {
-      "Fetch": [(draft, { actionName }) => {
-         draft.errorMessage = "Im fetch!"
-      }],
       "Request": [(draft, { actionName }) => {
          draft.loading = true
          draft.loadingMap[actionName] = true
@@ -645,8 +676,6 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
       "Success": [(draft, { actionName }) => {
          draft.loading = false
          draft.loadingMap[actionName] = false
-         draft.errorMessage = "Im fetch! SSS"
-
       }],
       "Failure": [(draft, { actionName }) => {
          draft.loading = false
