@@ -3,11 +3,12 @@ import { AnyAction, Reducer } from 'redux'
 
 export type Func = (...args: any) => any
 export type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer; intercept?: Reducer }
-export type ReduxAreaAnyAction = { type: string, actionName: string/*, actionTags: string[] */ }
-export type EmptyActionType<AreaActionType> = ReduxAreaAnyAction & AreaActionType
+export type AnyActionBase = { type: string }
+export type EmptyActionType<AreaActionType> = { type: string } & AreaActionType
 export type EmptyAction<AreaActionType> = () => EmptyActionType<AreaActionType>
 export type ReturnTypeAction<T extends Func, AreaActionType> = ReturnType<T> & EmptyActionType<AreaActionType>
-export type ActionCreatorInterceptor<AreaActionType> = (act: ReduxAreaAnyAction) => AreaActionType
+export type ActionCreatorInterceptorOptions = { action: { type: string }, actionName: string, actionTags: string[] }
+export type ActionCreatorInterceptor = (options: ActionCreatorInterceptorOptions) => any
 
 export type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func, AreaActionType> = {
    request: AreaAction<TBaseState, TAreaState, TFetchAction, AreaActionType>
@@ -16,6 +17,7 @@ export type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, T
    actionName: string
 }
 export type TIntercept<TState, AreaActionType> = (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
+export type TActionIntercept<TState> = (draft: Draft<TState>, action: ActionCreatorInterceptorOptions) => void
 
 export type AreaAction<TBaseState, TAreaState, T extends Func, AreaActionType> = ((...args: Parameters<T>) => ReturnTypeAction<T, AreaActionType>) & {
    name: string,
@@ -30,8 +32,10 @@ class Area<
    TAreaState,
    TBaseFailureAction extends Func,
    TAreaFailureAction extends Func,
-   TBaseActionType,
-   TAreaActionType
+   TBaseActionTypeInterceptor extends ActionCreatorInterceptor,
+   TAreaActionTypeInterceptor extends ActionCreatorInterceptor,
+   TBaseActionType = ReturnType<TBaseActionTypeInterceptor>,
+   TAreaActionType = ReturnType<TAreaActionTypeInterceptor>
    > {
    actions: ReduxAction[] = []
    initialState: TBaseState & TAreaState
@@ -45,14 +49,14 @@ class Area<
       public baseOptions: IAreaBaseOptions<
          TBaseState,
          TBaseFailureAction,
-         TBaseActionType
+         TBaseActionTypeInterceptor
       >,
       public areaOptions: IAreaOptions<
          TBaseState,
          TAreaState,
          TAreaFailureAction,
-         TBaseActionType,
-         TAreaActionType
+         TBaseActionTypeInterceptor,
+         TAreaActionTypeInterceptor
       >
    ) {
       this.namePrefix = ""
@@ -86,13 +90,13 @@ class Area<
       const baseInterceptors: TIntercept<TBaseState, TBaseActionType>[] = []
       const areaInterceptors: TIntercept<TBaseState & TAreaState, TBaseActionType & TAreaActionType>[] = []
       const baseTagInterceptors = this.baseOptions.baseInterceptors || {}
-      const tagInterceptors = this.areaOptions.tagInterceptors || {}
+      const tagInterceptors = this.areaOptions.areaInterceptors || {}
       tags.forEach(tag => {
          if (baseTagInterceptors[tag]) {
-            baseInterceptors.push(...baseTagInterceptors[tag])
+            baseInterceptors.push(...baseTagInterceptors[tag] as TIntercept<TBaseState, TBaseActionType>[])
          }
          if (tagInterceptors[tag]) {
-            areaInterceptors.push(...tagInterceptors[tag])
+            areaInterceptors.push(...tagInterceptors[tag] as TIntercept<TBaseState & TAreaState, TBaseActionType & TAreaActionType>[])
          }
       })
       return [baseInterceptors, areaInterceptors]
@@ -130,7 +134,7 @@ class Area<
       if (this.baseOptions.addNameSlashes) {
          name += "/"
       }
-      return this.failureNamePostfix
+      return name + this.failureNamePostfix
    }
 
    public rootReducer() {
@@ -179,19 +183,17 @@ class Area<
    ) => {
       let [baseIntercept, areaIntercept] = this.findTagsInterceptors(actionTags)
 
-      const baseActionIntercept = this.baseOptions.baseActionInterceptor
+      const baseActionIntercept = this.baseOptions.baseActionsIntercept
       const areaActionIntercept = this.areaOptions.actionInterceptor
       const actionCreator = (...args: Parameters<TAction>) => {
          let actionResult = action.apply(null, args)
          let baseActionResult = {
             ...actionResult,
-            type: name,
-            actionName,
-            //actionTags
-         } as ReduxAreaAnyAction
-         baseActionIntercept && (baseActionResult = { ...baseActionResult, ...baseActionIntercept(baseActionResult) })
-         areaActionIntercept && (baseActionResult = { ...baseActionResult, ...areaActionIntercept(baseActionResult) })
-         return baseActionResult as ReduxAreaAnyAction & TBaseActionType & TAreaActionType
+            type: name
+         } as AnyActionBase
+         baseActionIntercept && (baseActionResult = { ...baseActionResult, ...baseActionIntercept({ action: baseActionResult, actionName, actionTags }) })
+         areaActionIntercept && (baseActionResult = { ...baseActionResult, ...areaActionIntercept({ action: baseActionResult, actionName, actionTags }) })
+         return baseActionResult as AnyActionBase & TBaseActionType & TAreaActionType
       }
       const mappedAction = actionCreator as AreaAction<TBaseState, TAreaState, TAction, TBaseActionType & TAreaActionType>
       Object.defineProperty(mappedAction, 'name', {
@@ -535,64 +537,63 @@ class Area<
 interface IAreaBaseOptions<
    TBaseState,
    TBaseStandardFailure extends Func,
-   TBaseActionTypeAll
+   TBaseActionsIntercept extends ActionCreatorInterceptor
    > {
+   baseState: TBaseState
+   baseActionsIntercept?: TBaseActionsIntercept, //(options: ActionCreatorInterceptorOptions) => TBaseActionType
+   baseInterceptors?: { [tag: string]: TIntercept<TBaseState, ReturnType<TBaseActionsIntercept>>[] }
+   namePostfix?: string[]
    baseNamePrefix?: string,
    addNameSlashes?: boolean,
    addShortNameSlashes?: boolean,
-   baseState: TBaseState
    baseFailureAction?: TBaseStandardFailure,
    baseFailureProducer?: (draft: Draft<TBaseState>, action: ReturnType<TBaseStandardFailure>) => void
-   baseActionInterceptor?: ActionCreatorInterceptor<TBaseActionTypeAll>
-   namePostfix?: string[]
-   baseInterceptors?: { [tag: string]: TIntercept<TBaseState, TBaseActionTypeAll>[] }
-
 }
 
 interface IAreaOptions<
    TBaseState,
    TAreaState,
    TAreaFailureAction extends Func,
-   TBaseActionTypeAll,
-   TAreaActionTypeAll,
-   TTotalState = TBaseState & TAreaState,
-   TTotalActionTypeAll = TBaseActionTypeAll & TAreaActionTypeAll,
+   TBaseActionsIntercept extends ActionCreatorInterceptor,
+   TAreaActionsIntercept extends ActionCreatorInterceptor,
+   TBaseActionType = ReturnType<TBaseActionsIntercept>,
+   TAreaActionType = ReturnType<TAreaActionsIntercept>
    > {
    areaFailureAction?: TAreaFailureAction,
-   areaFailureProducer?: (draft: Draft<TTotalState>, action: ReturnType<TAreaFailureAction>) => void,
-   actionInterceptor?: ActionCreatorInterceptor<TTotalActionTypeAll>,
+   areaFailureProducer?: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAreaFailureAction>) => void,
    namePrefix?: string,
    tags?: string[],
    state: TAreaState,
-   tagInterceptors?: { [tag: string]: TIntercept<TTotalState, TTotalActionTypeAll>[] }
+   actionInterceptor?: TAreaActionsIntercept, // (options: ActionCreatorInterceptorOptions) => TBaseActionType,
+   areaInterceptors?: { [tag: string]: TIntercept<TBaseState & TAreaState, TBaseActionType & TAreaActionType>[] }
 }
 
 class AreaBase<
    TBaseState,
-   TBaseFailureAction extends Func,
-   TBaseActionTypeAll extends any = {}
+   TBaseStandardFailure extends Func,
+   TBaseActionsIntercept extends Func,
    >{
    constructor(
       public baseOptions: IAreaBaseOptions<
          TBaseState,
-         TBaseFailureAction,
-         TBaseActionTypeAll
+         TBaseStandardFailure,
+         TBaseActionsIntercept
       >
    ) {
    }
    public CreateArea<
       TAreaState,
       TAreaStandardFailure extends Func,
-      TAreaActionTypeAll extends any = {},
-      >(
-         areaOptions: IAreaOptions<
-            TBaseState,
-            TAreaState,
-            TAreaStandardFailure,
-            TBaseActionTypeAll,
-            TAreaActionTypeAll
-         >
-      ) {
+      TAreaActionsIntercept extends Func
+   >(
+      areaOptions: IAreaOptions<
+         TBaseState,
+         TAreaState,
+         TAreaStandardFailure,
+         TBaseActionsIntercept,
+         TAreaActionsIntercept
+      >
+   ) {
       return new Area(
          this.baseOptions,
          areaOptions
@@ -607,12 +608,12 @@ export interface IFetchAreaBaseState {
    errorMessage: string,
 }
 
-export var SimpleAreaBase = (baseName = "App") => new AreaBase({
-   baseNamePrefix: "@@" + baseName,
-   addNameSlashes: true,
-   addShortNameSlashes: true,
-   baseState: {}
-})
+// export var SimpleAreaBase = (baseName = "App") => new AreaBase({
+//    baseNamePrefix: "@@" + baseName,
+//    addNameSlashes: true,
+//    addShortNameSlashes: true,
+//    baseState: {}
+// })
 
 export var FetchAreaBase = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,
@@ -629,7 +630,14 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
       draft.error = error
       draft.errorMessage = error.message
    }),
+   baseActionsIntercept: ({ actionName, actionTags }: ActionCreatorInterceptorOptions) => ({
+      actionName,
+      actionTags
+   }),
    baseInterceptors: {
+      "Fetch": [(draft, { actionName }) => {
+         draft.errorMessage = "Im fetch!"
+      }],
       "Request": [(draft, { actionName }) => {
          draft.loading = true
          draft.loadingMap[actionName] = true
@@ -637,6 +645,8 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
       "Success": [(draft, { actionName }) => {
          draft.loading = false
          draft.loadingMap[actionName] = false
+         draft.errorMessage = "Im fetch! SSS"
+
       }],
       "Failure": [(draft, { actionName }) => {
          draft.loading = false
