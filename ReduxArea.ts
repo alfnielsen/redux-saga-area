@@ -1,8 +1,8 @@
 import produce, { Draft, Immutable } from "immer"
-import { AnyAction, Reducer } from 'redux'
+import { AnyAction, combineReducers, Reducer } from 'redux'
 
 export type Func = (...args: any) => any
-export type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer; intercept?: Reducer }
+export type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer }
 export type AnyActionBase = { type: string }
 export type EmptyActionType<AreaActionType> = { type: string } & AreaActionType
 export type EmptyAction<AreaActionType> = () => EmptyActionType<AreaActionType>
@@ -141,9 +141,6 @@ class Area<
       return (state: TAreaState = this.initialState, action: AnyAction) => {
          const actionArea = this.actions.find(x => x.name === action.type)
          if (actionArea) {
-            if (actionArea.intercept) {
-               state = actionArea.intercept(state, action)
-            }
             return actionArea.reducer(state, action)
          }
          return state
@@ -573,6 +570,21 @@ class AreaBase<
    TBaseStandardFailure extends Func,
    TBaseActionsIntercept extends Func,
    >{
+
+   /**
+    * Experimental code for creating reducerMap from areaBase.
+    * Main Problem: It's impossible to make a strongly type store this way!
+   areas: Area<TBaseState, any, TBaseStandardFailure, any, TBaseActionsIntercept, any>[] = [];
+   public baseReducerMap() {
+      const reducerMap = this.areas.reduce((p, c) => {
+            p[c.namePrefix] = c.rootReducer()
+            return p
+         }, {} as { [key: string]: (state: any, action: AnyAction) => any }
+      )
+      return combineReducers(reducerMap)
+   }
+   */
+
    constructor(
       public baseOptions: IAreaBaseOptions<
          TBaseState,
@@ -594,11 +606,14 @@ class AreaBase<
          TAreaActionsIntercept
       >
    ) {
-      return new Area(
+      const area = new Area(
          this.baseOptions,
          areaOptions
       )
+      //this.areas.push(area)
+      return area
    }
+
 }
 
 export interface IFetchAreaBaseState {
