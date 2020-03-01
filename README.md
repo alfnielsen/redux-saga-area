@@ -1,5 +1,5 @@
 # Redux-area
-_versoin 0.4.0_
+_version 0.4.0_
 
 **Short:** `Simplified strongly typed redux`
 
