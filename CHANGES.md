@@ -1,12 +1,40 @@
+## 0.4.3
+
+Fix '.reducer' so that it work as a normal reducer.
+
+> '.reducer' will not run any interceptions!
+
+It made so that a fallback with custom optimization is possible,
+so any logic that can block that is removed (like interception)
+
+Fix: '.use' so that it don't need 'type' and baseActionIntercept properties (actionName and/or actionTags)
+
+'.use' only run hte draft logic in the other action. It will not run any interception.
+
+'FetchAreaBase' now includes 'errorMap' that works like the loadingMap, adding failure count for 'baseFailure',
+mapped on 'actionName'.
+
+## 0.4.2
+
+Fix product method, so that its action are strongly typed.
+
+This fix has removed the option of adding ActionInterception in the Area.
+
+Its now only done on the AreaBase, and its now a required settings.
+
+For Areas that don't want ActionName ot ActionTags, an empty object must be returned. (See SimpleAreaBase)
+
+## 0.4.1
+
+Add missing types from baseActionInterception in baseFailure definition.
+
 ## 0.4.0
 
 Add AreaBase.
 
 This version is a total new version. Each Area now has AreaBase.
 
-Redux-area provides 2 AreaBases, but its now possible to create custom AreaBase,
-that can share Standard Failure (now called baseFailure and areaFailure), interceptions,
-and global area settings.
+Redux-area now uses AreaBases. (See full documentation on gibhub wiki)
 
 ### New options:
 
@@ -21,51 +49,6 @@ All action has now `actionName` beside the `type`
 (`baseActionInterceptor` and `actionInterceptor`, action interception, is still in feature development)
 
 The BaseAreaOptions and the AreaOptions is defined as following:
-
-```ts
-interface IAreaBaseOptions<
-  TAreaBaseState,
-  TBaseStandardFailure extends Func,
-  TAreaBaseActionType extends any
-> {
-  baseNamePrefix: string
-  addNameSlashes?: boolean
-  addShortNameSlashes?: boolean
-  fetchPostfix?: string[]
-  baseState: TAreaBaseState
-  baseFailureAction?: TBaseStandardFailure
-  baseFailureProducer?: (
-    draft: Draft<TAreaBaseState>,
-    action: ReturnType<TBaseStandardFailure>
-  ) => void
-  baseActionInterceptor?: ActionCreatorInterceptor<TAreaBaseActionType>
-  baseInterceptNormal?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
-  baseInterceptRequest?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
-  baseInterceptSuccess?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
-  baseInterceptFailure?: TIntercept<TAreaBaseState, TAreaBaseActionType>[]
-}
-
-interface IAreaOptions<
-  TBaseState,
-  TAreaState,
-  TAreaStandardFailure extends Func,
-  TAreaActionType extends any,
-  TTotalState = TBaseState & TAreaState
-> {
-  namePrefix: string
-  state: TAreaState
-  areaFailureAction?: TAreaStandardFailure
-  areaFailureProducer?: (
-    draft: Draft<TTotalState>,
-    action: ReturnType<TAreaStandardFailure>
-  ) => void
-  actionInterceptor?: ActionCreatorInterceptor<TAreaActionType>
-  interceptNormal?: TIntercept<TTotalState, TAreaActionType>[]
-  interceptRequest?: TIntercept<TTotalState, TAreaActionType>[]
-  interceptSuccess?: TIntercept<TTotalState, TAreaActionType>[]
-  interceptFailure?: TIntercept<TTotalState, TAreaActionType>[]
-}
-```
 
 ### Breaking changes
 
@@ -86,8 +69,8 @@ const area = FetchAreaBase("@@MyApp").CreateArea({
   state: {
     name: "",
     lastCall: "",
-    types: []
-  } as IMyAreaState
+    types: [],
+  } as IMyAreaState,
 })
 ```
 
@@ -170,7 +153,7 @@ You can now use fluent interface for `options` on `CreateReduxArea`
 
 ```ts
 const area = CreateReduxArea(state).options({
-  namePrefix: "@@MyArea/"
+  namePrefix: "@@MyArea/",
 })
 // or you can use the old version
 area.options()

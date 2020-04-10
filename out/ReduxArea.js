@@ -1,168 +1,389 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const immer_1 = require("immer");
-const produceMethod = (name, action, producer, intercept) => {
-    const actionCreator = (...args) => (Object.assign(Object.assign({}, action.apply(null, args)), { type: name }));
-    const mappedAction = actionCreator;
-    Object.defineProperty(mappedAction, 'name', {
-        value: name,
-        writable: false
-    });
-    Object.defineProperty(mappedAction, 'reducer', {
-        value: immer_1.default(producer),
-        writable: false
-    });
-    Object.defineProperty(mappedAction, 'use', {
-        value: (draft, action) => {
-            action.type = mappedAction.name;
-            producer(draft, action);
-        },
-        writable: false
-    });
-    if (intercept) {
-        Object.defineProperty(mappedAction, 'intercept', {
-            value: immer_1.default(intercept),
-            writable: false
-        });
-    }
-    return mappedAction;
-};
-const produceMethodEmptyAction = (name, producer, intercept) => {
-    const mappedAction = (() => ({}));
-    return produceMethod(name, mappedAction, producer, intercept);
-};
-const produceMethodEmptyProducer = (name, mappedAction, intercept) => {
-    const producer = ((draft, action) => { });
-    return produceMethod(name, mappedAction, producer, intercept);
-};
-const produceMethodDoubleEmpty = (name, intercept) => {
-    const mappedAction = (() => ({}));
-    const producer = ((draft, action) => { });
-    return produceMethod(name, mappedAction, producer, intercept);
-};
-const reduceMethod = (mappedAction, reducer, intercept) => {
-    Object.defineProperty(mappedAction, 'reducer', {
-        value: reducer,
-        writable: false
-    });
-    if (intercept) {
-        Object.defineProperty(mappedAction, 'intercept', {
-            value: immer_1.default(intercept),
-            writable: false
-        });
-    }
-    return mappedAction;
-};
-const reduceMethodEmpty = (name, reducer, intercept) => {
-    const mappedAction = (() => ({ type: name }));
-    if (!mappedAction.reducer) {
-        Object.defineProperty(mappedAction, 'reducer', {
-            value: reducer,
-            writable: false
-        });
-    }
-    Object.defineProperty(mappedAction, 'name', {
-        value: name,
-        writable: false
-    });
-    if (intercept) {
-        Object.defineProperty(mappedAction, 'intercept', {
-            value: immer_1.default(intercept),
-            writable: false
-        });
-    }
-    return mappedAction;
-};
-// --------- AddFetch Flow ---------
-// Request chain:
-const createRequestChain = (area, name) => {
-    const requestName = area.namePrefix + name + area.fetchPostfix[0];
-    const successName = area.namePrefix + name + area.fetchPostfix[1];
-    const doubleEmptyRequestAction = produceMethodDoubleEmpty(requestName, area.interceptRequest);
-    const doubleEmptySuccessAction = produceMethodDoubleEmpty(successName, area.interceptRequest);
-    return (Object.assign(Object.assign({ action: (action) => {
-            const emptyProducer = produceMethodEmptyProducer(requestName, action, area.interceptRequest);
-            return Object.assign(Object.assign({ produce: (producer) => {
-                    const mappedAction = produceMethod(requestName, action, producer, area.interceptRequest);
-                    return createSuccessChain(area, name, mappedAction);
-                } }, createSuccessChain(area, name, emptyProducer)), createFailureChain(area, name, emptyProducer, doubleEmptySuccessAction));
-        }, produce: (producer) => {
-            const mappedAction = produceMethodEmptyAction(area.namePrefix + name + area.fetchPostfix[0], producer, area.interceptRequest);
-            return createSuccessChain(area, name, mappedAction);
-        } }, createSuccessChain(area, name, doubleEmptyRequestAction)), createFailureChain(area, name, doubleEmptyRequestAction, doubleEmptySuccessAction)));
-};
-// Success chain:
-const createSuccessChain = (area, name, requestAction) => {
-    const successName = area.namePrefix + name + area.fetchPostfix[1];
-    const failureName = area.namePrefix + name + area.fetchPostfix[2];
-    const doubleFailureEmptyAction = produceMethodDoubleEmpty(failureName, area.interceptRequest);
-    return (Object.assign({ successAction: (successAction) => {
-            const emptyProducer = produceMethodEmptyProducer(successName, successAction, area.interceptRequest);
-            return Object.assign({ successProduce: (successProducer) => {
-                    let _successAction = produceMethod(successName, successAction, successProducer, area.interceptSuccess);
-                    return createFailureChain(area, name, requestAction, _successAction);
-                } }, createFailureChain(area, name, requestAction, emptyProducer));
-        }, successProduce: (successProducer) => {
-            const fetchSuccessAction = produceMethodEmptyAction(successName, successProducer, area.interceptRequest);
-            return createFailureChain(area, name, requestAction, fetchSuccessAction);
-        } }, createFailureChain(area, name, requestAction, doubleFailureEmptyAction)));
-};
-// Failure chain:
-const createFailureChain = (area, name, requestAction, successAction) => {
-    let _name = area.namePrefix + name + area.fetchPostfix[2];
-    return ({
-        standardFailure: () => {
-            if (area.standardFailureAction && area.standardFailureReducer) {
-                let failureAction = produceMethod(_name, area.standardFailureAction, area.standardFailureReducer, area.interceptFailure);
-                return finalizeChain(area, requestAction, successAction, failureAction);
-            }
-            throw new Error(`redux-area fetch method: ${name} tried to call standardFailureAction/standardFailureReducer, but the area didn't have one. Declare it with area.setStandardFetchFailure(action, producer)!`);
-        },
-        failureAction: (failureAction) => {
-            return {
-                failureProduce: (failureProducer) => {
-                    const _failureAction = produceMethod(_name, failureAction, failureProducer, area.interceptFailure);
-                    return finalizeChain(area, requestAction, successAction, _failureAction);
-                }
-            };
-        },
-        failureProduce: (failureProducer) => {
-            const _name = area.namePrefix + name + area.fetchPostfix[2];
-            const _failureAction = produceMethodEmptyAction(_name, failureProducer, area.interceptFailure);
-            return finalizeChain(area, requestAction, successAction, _failureAction);
-        }
-    });
-};
-const finalizeChain = (area, requestAction, successAction, failureAction) => {
-    area.actions.push(requestAction);
-    area.actions.push(successAction);
-    area.actions.push(failureAction);
-    return {
-        request: requestAction,
-        success: successAction,
-        failure: failureAction
-    };
-};
 class Area {
-    constructor(initialState, standardFailureAction, standardFailureReducer) {
-        this.initialState = initialState;
-        this.standardFailureAction = standardFailureAction;
-        this.standardFailureReducer = standardFailureReducer;
-        this.namePrefix = '';
-        this.fetchPostfix = ['Request', 'Success', 'Failure'];
-        this.interceptNormal = undefined;
-        this.interceptRequest = undefined;
-        this.interceptSuccess = undefined;
-        this.interceptFailure = undefined;
+    constructor(baseOptions, areaOptions) {
+        this.baseOptions = baseOptions;
+        this.areaOptions = areaOptions;
         this.actions = [];
+        this.produceMethod = (actionName, name, actionTags, action, producer) => {
+            let [baseIntercept, areaIntercept] = this.findTagsInterceptors(actionTags);
+            const baseActionIntercept = this.baseOptions.baseActionsIntercept;
+            const actionCreator = (...args) => {
+                let actionResult = action.apply(null, args);
+                let baseActionResult = Object.assign(Object.assign({}, actionResult), { type: name });
+                baseActionIntercept && (baseActionResult = Object.assign(Object.assign({}, baseActionResult), baseActionIntercept({ action: baseActionResult, actionName, actionTags })));
+                return baseActionResult;
+            };
+            const mappedAction = actionCreator;
+            Object.defineProperty(mappedAction, 'name', {
+                value: name,
+                writable: false
+            });
+            Object.defineProperty(mappedAction, 'actionName', {
+                value: actionName,
+                writable: false
+            });
+            if (baseIntercept || areaIntercept) {
+                Object.defineProperty(mappedAction, 'reducer', {
+                    value: (state, action) => immer_1.default(state, draft => {
+                        producer(draft, action);
+                        baseIntercept && baseIntercept.forEach(inter => inter(draft, action));
+                        areaIntercept && areaIntercept.forEach(inter => inter(draft, action));
+                    }),
+                    writable: false
+                });
+            }
+            else {
+                Object.defineProperty(mappedAction, 'reducer', {
+                    value: immer_1.default(producer),
+                    writable: false
+                });
+            }
+            Object.defineProperty(mappedAction, 'use', {
+                value: (draft, action) => {
+                    action.type = mappedAction.name;
+                    producer(draft, action);
+                },
+                writable: false
+            });
+            return mappedAction;
+        };
+        this.produceMethodEmptyAction = (actionName, name, actionTags, producer) => {
+            const mappedAction = () => ({}); // as () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>
+            return this.produceMethod(actionName, name, actionTags, mappedAction, producer);
+        };
+        this.produceMethodEmptyProducer = (actionName, name, actionTags, mappedAction) => {
+            const producer = () => { }; // as (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void
+            return this.produceMethod(actionName, name, actionTags, mappedAction, producer);
+        };
+        this.produceMethodDoubleEmpty = (actionName, name, actionTags) => {
+            const mappedAction = () => ({}); // as () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>
+            const producer = () => { }; // as (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void
+            return this.produceMethod(actionName, name, actionTags, mappedAction, producer);
+        };
+        this.reduceMethod = (actionName, name, actionTags, action, reducer) => {
+            const baseActionIntercept = this.baseOptions.baseActionsIntercept;
+            const actionCreator = (...args) => {
+                let actionResult = action.apply(null, args);
+                let baseActionResult = Object.assign(Object.assign({}, actionResult), { type: name });
+                baseActionIntercept && (baseActionResult = Object.assign(Object.assign({}, baseActionResult), baseActionIntercept({ action: baseActionResult, actionName, actionTags })));
+                return baseActionResult;
+            };
+            const mappedAction = actionCreator;
+            Object.defineProperty(mappedAction, 'name', {
+                value: name,
+                writable: false
+            });
+            Object.defineProperty(mappedAction, 'actionName', {
+                value: actionName,
+                writable: false
+            });
+            Object.defineProperty(mappedAction, 'reducer', {
+                value: reducer,
+                writable: false
+            });
+            Object.defineProperty(mappedAction, 'use', {
+                value: (draft, action) => {
+                    action.type = mappedAction.name;
+                    return reducer(draft, action);
+                },
+                writable: false
+            });
+            return mappedAction;
+        };
+        this.reduceMethodEmpty = (name, actionName, actionTags, reducer) => {
+            const action = () => ({}); // as unknown as (() => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>)
+            return this.reduceMethod(actionName, name, actionTags, action, reducer);
+        };
+        // --------- Add Flow ---------
+        this.createAddChain = (actionName, tags = []) => {
+            const typeName = this.getActionName(actionName);
+            return ({
+                /**
+                 * produce (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { type }) => {
+                 *    draft.startProduce = true
+                 * })
+                 */
+                produce: (producer) => {
+                    const mappedAction = this.produceMethodEmptyAction(actionName, typeName, tags, producer);
+                    this.actions.push(mappedAction);
+                    return mappedAction;
+                },
+                reducer: (reducer) => {
+                    const mappedAction = this.reduceMethodEmpty(actionName, typeName, tags, reducer);
+                    this.actions.push(mappedAction);
+                    return mappedAction;
+                },
+                /**
+                * actionCreator ('type' will be added automatically + props defined in AreaBase)
+                * @param action ActionCreator
+                * @example
+                * .action((id: number) => ({ id })
+                */
+                action: (action) => {
+                    //  MappedAction & {magic!}
+                    return {
+                        /**
+                         * produce (props from 'action' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { id }) => {
+                         *    draft.productId = id
+                         * })
+                         */
+                        produce: (producer) => {
+                            const mappedAction = this.produceMethod(actionName, typeName, tags, action, producer);
+                            this.actions.push(mappedAction);
+                            return mappedAction;
+                        },
+                        reducer: (reducer) => {
+                            const mappedAction = this.reduceMethod(actionName, typeName, tags, action, reducer);
+                            this.actions.push(mappedAction);
+                            return mappedAction;
+                        }
+                    };
+                }
+            });
+        };
+        // --------- AddFetch Flow ---------
+        // Request chain:
+        this.createRequestChain = (actionName, tags = []) => {
+            const requestName = this.getRequestName(actionName);
+            const successName = this.getSuccessName(actionName);
+            const requestTags = ["Request", ...tags];
+            const successTags = ["Success", ...tags];
+            const doubleEmptyRequestAction = this.produceMethodDoubleEmpty(actionName, requestName, requestTags);
+            const doubleEmptySuccessAction = this.produceMethodDoubleEmpty(actionName, successName, successTags);
+            return (Object.assign(Object.assign({ 
+                /**
+                 * Fetch - request action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .action((id: number) => ({ id })
+                 */
+                action: (action) => {
+                    const emptyProducer = this.produceMethodEmptyProducer(actionName, requestName, requestTags, action);
+                    return Object.assign(Object.assign({ 
+                        /**
+                         * fetch - produce request (props from 'action' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { id }) => {
+                         *    draft.productId = id
+                         * })
+                         */
+                        produce: (producer) => {
+                            const mappedAction = this.produceMethod(actionName, requestName, requestTags, action, producer);
+                            return this.createSuccessChain(actionName, tags, mappedAction);
+                        } }, this.createSuccessChain(actionName, tags, emptyProducer)), this.createFailureChain(actionName, tags, emptyProducer, doubleEmptySuccessAction));
+                }, 
+                /**
+                 * fetch - produce request (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { type }) => {
+                 *    draft.startProduce = true
+                 * })
+                 */
+                produce: (producer) => {
+                    const mappedAction = this.produceMethodEmptyAction(actionName, requestName, requestTags, producer);
+                    return this.createSuccessChain(actionName, tags, mappedAction);
+                } }, this.createSuccessChain(actionName, tags, doubleEmptyRequestAction)), this.createFailureChain(actionName, tags, doubleEmptyRequestAction, doubleEmptySuccessAction)));
+        };
+        // Success chain:
+        this.createSuccessChain = (actionName, tags, requestAction) => {
+            const successName = this.getSuccessName(actionName);
+            const successTags = ["Success", ...tags];
+            const doubleEmptyAction = this.produceMethodDoubleEmpty(actionName, successName, successTags);
+            return (Object.assign({ 
+                /**
+                 * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .successAction((products: IProduct[]) => ({ products })
+                 */
+                successAction: (successAction) => {
+                    const emptyProducer = this.produceMethodEmptyProducer(actionName, successName, successTags, successAction);
+                    return Object.assign({ 
+                        /**
+                         * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        successProduce: (successProducer) => {
+                            let _successAction = this.produceMethod(actionName, successName, successTags, successAction, successProducer);
+                            return this.createFailureChain(actionName, tags, requestAction, _successAction);
+                        } }, this.createFailureChain(actionName, tags, requestAction, emptyProducer));
+                }, 
+                /**
+                 * fetch - produce success (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .successProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                successProduce: (successProducer) => {
+                    const fetchSuccessAction = this.produceMethodEmptyAction(actionName, successName, successTags, successProducer);
+                    return this.createFailureChain(actionName, tags, requestAction, fetchSuccessAction);
+                } }, this.createFailureChain(actionName, tags, requestAction, doubleEmptyAction)));
+        };
+        // Failure chain:
+        this.createFailureChain = (actionName, tags, requestAction, successAction) => {
+            let failureName = this.getFailureName(actionName);
+            const failureTags = ["Failure", ...tags];
+            return ({
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => {
+                    if (this.baseOptions.baseFailureAction && this.baseOptions.baseFailureProducer) {
+                        let failureAction = this.produceMethod(actionName, failureName, failureTags, this.baseOptions.baseFailureAction, this.baseOptions.baseFailureProducer);
+                        return this.finalizeChain(actionName, requestAction, successAction, failureAction);
+                    }
+                    throw new Error(`redux-area fetch method: ${actionName} tried to call baseFailureAction/baseFailureReducer, but the base didn't have one. Declare it with Redux-area Base settings`);
+                },
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => {
+                    if (this.areaOptions.areaFailureAction && this.areaOptions.areaFailureProducer) {
+                        let failureAction = this.produceMethod(actionName, failureName, failureTags, this.areaOptions.areaFailureAction, this.areaOptions.areaFailureProducer);
+                        return this.finalizeChain(actionName, requestAction, successAction, failureAction);
+                    }
+                    throw new Error(`redux-area fetch method: ${actionName} tried to call areaFailureAction/areaFailureReducer, but the area didn't have one. Declare it with Redux-area area settings`);
+                },
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: (failureAction) => {
+                    return {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer) => {
+                            const _failureAction = this.produceMethod(actionName, failureName, failureTags, failureAction, failureProducer);
+                            return this.finalizeChain(actionName, requestAction, successAction, _failureAction);
+                        }
+                    };
+                },
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer) => {
+                    const _failureAction = this.produceMethodEmptyAction(actionName, failureName, failureTags, failureProducer);
+                    return this.finalizeChain(actionName, requestAction, successAction, _failureAction);
+                }
+            });
+        };
+        this.finalizeChain = (actionName, requestAction, successAction, failureAction) => {
+            this.actions.push(requestAction);
+            this.actions.push(successAction);
+            this.actions.push(failureAction);
+            return {
+                request: requestAction,
+                success: successAction,
+                failure: failureAction,
+                actionName
+            };
+        };
+        this.namePrefix = "";
+        if (this.baseOptions.baseNamePrefix) {
+            this.namePrefix += this.baseOptions.baseNamePrefix;
+        }
+        if (this.areaOptions.namePrefix) {
+            if (this.baseOptions.addNameSlashes) {
+                this.namePrefix += "/";
+            }
+            this.namePrefix += this.areaOptions.namePrefix;
+        }
+        if (this.baseOptions.fetchNamePostfix) {
+            this.normalNamePostfix = this.baseOptions.fetchNamePostfix[0];
+            this.requestNamePostfix = this.baseOptions.fetchNamePostfix[1];
+            this.successNamePostfix = this.baseOptions.fetchNamePostfix[2];
+            this.failureNamePostfix = this.baseOptions.fetchNamePostfix[3];
+        }
+        else {
+            this.normalNamePostfix = 'Normal';
+            this.requestNamePostfix = 'Request';
+            this.successNamePostfix = 'Success';
+            this.failureNamePostfix = 'Failure';
+        }
+        this.initialState = Object.assign(Object.assign({}, baseOptions.baseState), areaOptions.state);
+    }
+    findTagsInterceptors(tags) {
+        const baseInterceptors = [];
+        const areaInterceptors = [];
+        const baseTagInterceptors = this.baseOptions.baseInterceptors || {};
+        const tagInterceptors = this.areaOptions.areaInterceptors || {};
+        tags.forEach(tag => {
+            if (baseTagInterceptors[tag]) {
+                baseInterceptors.push(...baseTagInterceptors[tag]);
+            }
+            if (tagInterceptors[tag]) {
+                areaInterceptors.push(...tagInterceptors[tag]);
+            }
+        });
+        return [baseInterceptors, areaInterceptors];
+    }
+    getActionName(name) {
+        if (!this.namePrefix) {
+            return name;
+        }
+        if (this.baseOptions.addNameSlashes) {
+            return this.namePrefix + "/" + name;
+        }
+        return this.namePrefix + name;
+    }
+    getRequestName(name) {
+        name = this.getActionName(name);
+        if (this.baseOptions.addNameSlashes) {
+            name += "/";
+        }
+        return name + this.requestNamePostfix;
+    }
+    getSuccessName(name) {
+        name = this.getActionName(name);
+        if (this.baseOptions.addNameSlashes) {
+            name += "/";
+        }
+        return name + this.successNamePostfix;
+    }
+    getFailureName(name) {
+        name = this.getActionName(name);
+        if (this.baseOptions.addNameSlashes) {
+            name += "/";
+        }
+        return name + this.failureNamePostfix;
     }
     rootReducer() {
         return (state = this.initialState, action) => {
             const actionArea = this.actions.find(x => x.name === action.type);
             if (actionArea) {
-                if (actionArea.intercept) {
-                    state = actionArea.intercept(state, action);
-                }
                 return actionArea.reducer(state, action);
             }
             return state;
@@ -175,98 +396,80 @@ class Area {
      * 'produce' uses [immer](https://immerjs.github.io/immer/docs/introduction) (always recommended) \
      * 'reducer' will create a normal reducer
      * @param name
+     * @param tags (optional) list of tags
      */
-    add(name) {
-        const _name = this.namePrefix + name;
-        return ({
-            produce: (producer) => {
-                const mappedAction = produceMethodEmptyAction(_name, producer, this.interceptNormal);
-                this.actions.push(mappedAction);
-                return mappedAction;
-            },
-            reducer: (reducer) => {
-                const mappedAction = reduceMethodEmpty(_name, reducer, this.interceptNormal);
-                this.actions.push(mappedAction);
-                return mappedAction;
-            },
-            action: (action) => {
-                return {
-                    produce: (producer) => {
-                        const mappedAction = produceMethod(_name, action, producer, this.interceptNormal);
-                        this.actions.push(mappedAction);
-                        return mappedAction;
-                    },
-                    reducer: (reducer) => {
-                        const mappedAction = reduceMethod(action, reducer, this.interceptNormal);
-                        this.actions.push(mappedAction);
-                        return mappedAction;
-                    }
-                };
-            }
-        });
+    add(name, tags = []) {
+        return this.createAddChain(name, ["All", "Normal", ...(this.areaOptions.tags || []), ...tags]);
     }
     /**
      * Add 3 action (Request, success and failure). \
      * Optional 'interceptRequest', 'interceptSuccess' and 'interceptFailure' in options will effect this. \
-     * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final standardFailure of produceFailure) \
+     * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final areaFailure of produceFailure) \
      * @param name
+     * @param tags (optional) list of tags
      */
-    addFetch(name) {
-        return createRequestChain(this, name);
-    }
-    options(options) {
-        if (options.namePrefix !== undefined) {
-            this.namePrefix = options.namePrefix;
-        }
-        if (options.fetchPostfix !== undefined) {
-            this.fetchPostfix = options.fetchPostfix;
-        }
-        if (options.interceptNormal !== undefined) {
-            this.interceptNormal = options.interceptNormal;
-        }
-        if (options.interceptRequest !== undefined) {
-            this.interceptRequest = options.interceptRequest;
-        }
-        if (options.interceptSuccess !== undefined) {
-            this.interceptSuccess = options.interceptSuccess;
-        }
-        if (options.interceptFailure !== undefined) {
-            this.interceptFailure = options.interceptFailure;
-        }
-        return this;
-    }
-    /**
-     * Add StandardFailure method. \
-     * Is set the standardFailure for 'addFetch' will be enabled. \
-     * Not this method must be chain directly on the CreateReduxArea to work correct. \
-     * (Due to the way typescript calculate interfaces) \
-     * @example
-     * const area = CreateReduxArea({ loading: true })
-     *    .option({...})
-     *    .setStandardFetchFailure(action, producer);
-     * // OR
-     * const area = CreateReduxArea({ loading: true })
-     *    .setStandardFetchFailure(action, producer);
-     * // DON'T DO:
-     * area.setStandardFetchFailure(action, producer); // Will NOT work
-     * area = area.setStandardFetchFailure(action, producer); // Will NOT work
-     * @param action
-     * @param producer
-     */
-    setStandardFetchFailure(action, producer) {
-        const a = new Area(this.initialState, action, producer);
-        a.interceptNormal = this.interceptNormal;
-        a.interceptFailure = this.interceptFailure;
-        a.interceptRequest = this.interceptRequest;
-        a.interceptSuccess = this.interceptSuccess;
-        a.namePrefix = this.namePrefix;
-        a.fetchPostfix = [...this.fetchPostfix];
-        return a;
+    addFetch(name, tags = []) {
+        return this.createRequestChain(name, ["All", "Fetch", ...(this.areaOptions.tags || []), ...tags]);
     }
 }
-// -----------
-const CreateReduxArea = (initialState) => {
-    return new Area(initialState);
-};
-exports.default = CreateReduxArea;
+class AreaBase {
+    constructor(baseOptions) {
+        this.baseOptions = baseOptions;
+    }
+    CreateArea(areaOptions) {
+        const area = new Area(this.baseOptions, areaOptions);
+        return area;
+    }
+}
+exports.SimpleAreaBase = (baseName = "App") => new AreaBase({
+    baseNamePrefix: "@@" + baseName,
+    addNameSlashes: true,
+    addShortNameSlashes: true,
+    baseState: {},
+    baseActionsIntercept: ( /*{ actionName }: ActionCreatorInterceptorOptions*/) => ({ /*actionName*/}),
+});
+exports.FetchAreaBase = (baseName = "App") => new AreaBase({
+    baseNamePrefix: "@@" + baseName,
+    addNameSlashes: true,
+    addShortNameSlashes: true,
+    baseState: {
+        loading: false,
+        loadingMap: {},
+        error: undefined,
+        errorMap: {},
+        errorMessage: ''
+    },
+    baseFailureAction: (error) => ({ error }),
+    baseFailureProducer: ((draft, { error, actionName }) => {
+        draft.error = error;
+        draft.errorMessage = error.message;
+        draft.errorMap[actionName] = {
+            error,
+            message: error.message,
+            count: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1,
+            currentCount: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1
+        };
+    }),
+    baseActionsIntercept: ({ actionName }) => ({
+        actionName
+    }),
+    baseInterceptors: {
+        "Request": [(draft, { actionName }) => {
+                draft.loading = true;
+                draft.loadingMap[actionName] = true;
+            }],
+        "Success": [(draft, { actionName }) => {
+                draft.loading = false;
+                draft.loadingMap[actionName] = false;
+                if (draft.errorMap[actionName]) {
+                    draft.errorMap[actionName].currentCount = 0;
+                }
+            }],
+        "Failure": [(draft, { actionName }) => {
+                draft.loading = false;
+                draft.loadingMap[actionName] = false;
+            }]
+    }
+});
+exports.default = AreaBase;
 //# sourceMappingURL=ReduxArea.js.map

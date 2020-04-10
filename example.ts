@@ -5,8 +5,6 @@ import { FetchAreaBase } from "./ReduxArea"
 export interface IMyAreaState {
    readonly name: string
    readonly lastCall: string,
-   readonly loading: boolean
-   readonly error?: Error
    readonly types: string[]
 }
 
@@ -34,6 +32,7 @@ const updateName = area
       name
    }))
    .produce((draft, { name }) => {
+      clearName.use(draft, {})
       draft.name = name
    })
 
@@ -46,18 +45,15 @@ const clearName = area
 const getName = area
    .addFetch('getName')
    .action((id: number) => ({ id }))
-   .produce((draft) => {
-      draft.loading = true
-   })
    .successAction((name: string) => ({ name }))
    .successProduce((draft, { name }) => {
       draft.name = name
-      draft.loading = false
    })
    .failureAction((error: Error) => ({ error }))
    .failureProduce((draft, { error }) => {
       draft.loading = false
       draft.error = error
+      // write you own failure for this action
    })
 
 const getAllTypes = area
