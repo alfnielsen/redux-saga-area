@@ -265,7 +265,7 @@ class Area<
       name: string,
       actionTags: string[],
       action: TAction,
-      reducer: (state: Immutable<TBaseState & TAreaState>, reducerAction: TAction) => any
+      reducer: (state: TBaseState & TAreaState, reducerAction: TAction) => any
    ) => {
       const baseActionIntercept = this.baseOptions.baseActionsIntercept
       const actionCreator = (...args: Parameters<TAction>) => {
@@ -293,7 +293,7 @@ class Area<
       })
 
       Object.defineProperty(mappedAction, 'use', {
-         value: (draft: Immutable<TBaseState & TAreaState>, action: ReturnType<TAction>) => {
+         value: (draft: TBaseState & TAreaState, action: ReturnType<TAction>) => {
             action.type = mappedAction.name
             return reducer(draft, action)
          },
@@ -307,7 +307,7 @@ class Area<
       name: string,
       actionName: string,
       actionTags: string[],
-      reducer: (state: Immutable<TBaseState & TAreaState>) => TBaseState & TAreaState
+      reducer: (state: TBaseState & TAreaState) => TBaseState & TAreaState
    ) => {
       const action = () => ({}) // as unknown as (() => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>)
       return this.reduceMethod<typeof action>(
@@ -340,7 +340,7 @@ class Area<
             return mappedAction
          },
          reducer: (
-            reducer: (state: Immutable<TAreaState & TBaseState>) => any
+            reducer: (state: TAreaState & TBaseState) => any
          ) => {
             const mappedAction = this.reduceMethodEmpty(actionName, typeName, tags, reducer)
             this.actions.push(mappedAction as unknown as ReduxAction)
@@ -372,7 +372,7 @@ class Area<
                   return mappedAction
                },
                reducer: (
-                  reducer: (state: Immutable<TAreaState & TBaseState>) => any
+                  reducer: (state: TAreaState & TBaseState) => any
                ) => {
                   const mappedAction = this.reduceMethod(actionName, typeName, tags, action, reducer)
                   this.actions.push(mappedAction as unknown as ReduxAction)
