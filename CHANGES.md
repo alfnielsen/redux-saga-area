@@ -1,3 +1,7 @@
+## 0.4.4
+
+remove immutable from .reducer to avoid incorrect type checking
+
 ## 0.4.3
 
 Fix '.reducer' so that it work as a normal reducer.
