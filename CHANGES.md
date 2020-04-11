@@ -1,3 +1,7 @@
+## 0.4.5
+
+fix .reducer argument 'action' type
+
 ## 0.4.4
 
 remove immutable from .reducer to avoid incorrect type checking

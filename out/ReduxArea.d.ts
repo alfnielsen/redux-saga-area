@@ -72,7 +72,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
          * })
          */
         produce: (producer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
-        reducer: (reducer: (state: TAreaState & TBaseState) => any) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
+        reducer: (reducer: (state: TAreaState & TBaseState, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => any) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
         /**
         * actionCreator ('type' will be added automatically + props defined in AreaBase)
         * @param action ActionCreator
@@ -89,7 +89,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              * })
              */
             produce: (producer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
-            reducer: (reducer: (state: TAreaState & TBaseState) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
+            reducer: (reducer: (state: TAreaState & TBaseState, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
         };
     };
     /**
@@ -853,8 +853,8 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
     protected produceMethodEmptyAction: (actionName: string, name: string, actionTags: string[], producer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
     protected produceMethodEmptyProducer: <TAction extends Func>(actionName: string, name: string, actionTags: string[], mappedAction: TAction) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
     protected produceMethodDoubleEmpty: (actionName: string, name: string, actionTags: string[]) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
-    protected reduceMethod: <TAction extends Func>(actionName: string, name: string, actionTags: string[], action: TAction, reducer: (state: TBaseState & TAreaState, reducerAction: TAction) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
-    protected reduceMethodEmpty: (name: string, actionName: string, actionTags: string[], reducer: (state: TBaseState & TAreaState) => TBaseState & TAreaState) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
+    protected reduceMethod: <TAction extends Func>(actionName: string, name: string, actionTags: string[], action: TAction, reducer: (state: TBaseState & TAreaState, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
+    protected reduceMethodEmpty: (name: string, actionName: string, actionTags: string[], reducer: (state: TBaseState & TAreaState, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => TBaseState & TAreaState) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
     protected createAddChain: (actionName: string, tags?: string[]) => {
         /**
          * produce (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -865,7 +865,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
          * })
          */
         produce: (producer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
-        reducer: (reducer: (state: TAreaState & TBaseState) => any) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
+        reducer: (reducer: (state: TAreaState & TBaseState, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => any) => AreaAction<TBaseState, TAreaState, () => {}, ReturnType<TBaseActionTypeInterceptor>>;
         /**
         * actionCreator ('type' will be added automatically + props defined in AreaBase)
         * @param action ActionCreator
@@ -882,7 +882,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              * })
              */
             produce: (producer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
-            reducer: (reducer: (state: TAreaState & TBaseState) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
+            reducer: (reducer: (state: TAreaState & TBaseState, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => any) => AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>;
         };
     };
     protected createRequestChain: (actionName: string, tags?: string[]) => {

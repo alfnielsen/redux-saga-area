@@ -265,7 +265,7 @@ class Area<
       name: string,
       actionTags: string[],
       action: TAction,
-      reducer: (state: TBaseState & TAreaState, reducerAction: TAction) => any
+      reducer: (state: TBaseState & TAreaState, action: ReturnTypeAction<TAction, ReturnType<TBaseActionTypeInterceptor>>) => any
    ) => {
       const baseActionIntercept = this.baseOptions.baseActionsIntercept
       const actionCreator = (...args: Parameters<TAction>) => {
@@ -307,7 +307,7 @@ class Area<
       name: string,
       actionName: string,
       actionTags: string[],
-      reducer: (state: TBaseState & TAreaState) => TBaseState & TAreaState
+      reducer: (state: TBaseState & TAreaState, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => TBaseState & TAreaState
    ) => {
       const action = () => ({}) // as unknown as (() => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>)
       return this.reduceMethod<typeof action>(
@@ -340,7 +340,7 @@ class Area<
             return mappedAction
          },
          reducer: (
-            reducer: (state: TAreaState & TBaseState) => any
+            reducer: (state: TAreaState & TBaseState, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => any
          ) => {
             const mappedAction = this.reduceMethodEmpty(actionName, typeName, tags, reducer)
             this.actions.push(mappedAction as unknown as ReduxAction)
@@ -372,9 +372,9 @@ class Area<
                   return mappedAction
                },
                reducer: (
-                  reducer: (state: TAreaState & TBaseState) => any
+                  reducer: (state: TAreaState & TBaseState, action: MappedAction) => any
                ) => {
-                  const mappedAction = this.reduceMethod(actionName, typeName, tags, action, reducer)
+                  const mappedAction = this.reduceMethod<TAction>(actionName, typeName, tags, action, reducer)
                   this.actions.push(mappedAction as unknown as ReduxAction)
                   return mappedAction
                }
