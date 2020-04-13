@@ -131,6 +131,6 @@ yarn add redux-area
 
 _(editable codesandbox.io)_
 
-Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
+Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-tb1lr?fontsize=14&hidenavigation=1&theme=dark)
 
 [![Demo CountPages alpha](./ExImage.png)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
