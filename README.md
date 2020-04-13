@@ -44,7 +44,7 @@ export interface IMyAreaState {
 }
 
 // Create Area
-const area = FetchAreaBase(MyApp).CreateArea({
+const area = FetchAreaBase("MyApp").CreateArea({
    namePrefix: 'MyArea',
    state: {
      name: ''
