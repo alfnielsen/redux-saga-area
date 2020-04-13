@@ -1,3 +1,11 @@
+## 0.4.7
+
+Final build that (target es6) with a production tested version of 0.4.x
+
+## 0.4.6
+
+An experimental build to that targets 'es5' ()
+
 ## 0.4.5
 
 fix .reducer argument 'action' type

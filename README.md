@@ -1,7 +1,8 @@
 # Redux-area
+
 **Short:** `Simplified strongly typed redux`
 
-_(version 0.4.0)_
+_(version 0.4.x)_
 
 When defining redux actions and reducers with typescript,
 you often need a lot of typing for interfaces to ensure that you can use your actions,
@@ -19,6 +20,8 @@ Github [Source](https://github.com/alfnielsen/redux-area) Code
 The npm [package](https://www.npmjs.com/package/redux-area)
 
 See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki).
+
+The wiki includes all new options and features and a guide for upgrading from v0.2.x to v0.4.x
 
 **The goal is:** to ease and reduce the amount of code we need to write to get all benefits of both
 
@@ -129,7 +132,5 @@ yarn add redux-area
 _(editable codesandbox.io)_
 
 Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-obn9u?fontsize=14&hidenavigation=1&theme=dark)
-
-Demo: [Demo in React (No interfaces)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)
 
 [![Demo CountPages alpha](./ExImage.png)](https://codesandbox.io/s/redux-area-no-interfaces-r256o?fontsize=14&hidenavigation=1&theme=dark)

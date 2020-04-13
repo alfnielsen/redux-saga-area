@@ -167,7 +167,7 @@ class Area<
       return this.createRequestChain(name, ["All", "Fetch", ...(this.areaOptions.tags || []), ...tags])
    }
 
-   protected produceMethod = <
+   private produceMethod = <
       TAction extends Func,
       >(
          actionName: string,
@@ -224,7 +224,7 @@ class Area<
       return mappedAction
    }
 
-   protected produceMethodEmptyAction = (
+   private produceMethodEmptyAction = (
       actionName: string,
       name: string,
       actionTags: string[],
@@ -236,7 +236,7 @@ class Area<
       )
    }
 
-   protected produceMethodEmptyProducer = <TAction extends Func>(
+   private produceMethodEmptyProducer = <TAction extends Func>(
       actionName: string,
       name: string,
       actionTags: string[],
@@ -248,7 +248,7 @@ class Area<
       )
    }
 
-   protected produceMethodDoubleEmpty = (
+   private produceMethodDoubleEmpty = (
       actionName: string,
       name: string,
       actionTags: string[]
@@ -260,7 +260,7 @@ class Area<
       )
    }
 
-   protected reduceMethod = <TAction extends Func>(
+   private reduceMethod = <TAction extends Func>(
       actionName: string,
       name: string,
       actionTags: string[],
@@ -303,7 +303,7 @@ class Area<
       return mappedAction
    }
 
-   protected reduceMethodEmpty = (
+   private reduceMethodEmpty = (
       name: string,
       actionName: string,
       actionTags: string[],
@@ -317,7 +317,7 @@ class Area<
 
    // --------- Add Flow ---------
 
-   protected createAddChain = (
+   private createAddChain = (
       actionName: string,
       tags: string[] = []
    ) => {
@@ -386,7 +386,7 @@ class Area<
 
    // --------- AddFetch Flow ---------
    // Request chain:
-   protected createRequestChain = (
+   private createRequestChain = (
       actionName: string,
       tags: string[] = []
    ) => {
@@ -464,7 +464,7 @@ class Area<
    }
 
    // Success chain:
-   protected createSuccessChain = <TFetchRequestAction extends Func>(
+   private createSuccessChain = <TFetchRequestAction extends Func>(
       actionName: string,
       tags: string[],
       requestAction: AreaAction<TBaseState, TAreaState, TFetchRequestAction, ReturnType<TBaseActionTypeInterceptor>>,
@@ -532,7 +532,7 @@ class Area<
    }
 
    // Failure chain:
-   protected createFailureChain = <
+   private createFailureChain = <
       TFetchRequestAction extends Func,
       TFetchSuccessAction extends Func,
       >(
@@ -623,7 +623,7 @@ class Area<
       })
    }
 
-   protected finalizeChain = <
+   private finalizeChain = <
       // Other stuff
       TFetchRequestAction extends Func,
       TFetchSuccessAction extends Func,
