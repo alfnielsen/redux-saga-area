@@ -153,12 +153,9 @@ class Area {
         // Request chain:
         this.createRequestChain = (actionName, tags = []) => {
             const requestName = this.getRequestName(actionName);
-            const successName = this.getSuccessName(actionName);
             const requestTags = ["Request", ...tags];
-            const successTags = ["Success", ...tags];
             const doubleEmptyRequestAction = this.produceMethodDoubleEmpty(actionName, requestName, requestTags);
-            const doubleEmptySuccessAction = this.produceMethodDoubleEmpty(actionName, successName, successTags);
-            return (Object.assign(Object.assign({ 
+            return (Object.assign({ 
                 /**
                  * Fetch - request action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
@@ -167,7 +164,7 @@ class Area {
                  */
                 action: (action) => {
                     const emptyProducer = this.produceMethodEmptyProducer(actionName, requestName, requestTags, action);
-                    return Object.assign(Object.assign({ 
+                    return Object.assign({ 
                         /**
                          * fetch - produce request (props from 'action' method, plus auto generated 'type' and props from AreaBase)
                          * @param producer A produce method that mutates the draft (state)
@@ -179,7 +176,7 @@ class Area {
                         produce: (producer) => {
                             const mappedAction = this.produceMethod(actionName, requestName, requestTags, action, producer);
                             return this.createSuccessChain(actionName, tags, mappedAction);
-                        } }, this.createSuccessChain(actionName, tags, emptyProducer)), this.createFailureChain(actionName, tags, emptyProducer, doubleEmptySuccessAction));
+                        } }, this.createSuccessChain(actionName, tags, emptyProducer));
                 }, 
                 /**
                  * fetch - produce request (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -192,13 +189,13 @@ class Area {
                 produce: (producer) => {
                     const mappedAction = this.produceMethodEmptyAction(actionName, requestName, requestTags, producer);
                     return this.createSuccessChain(actionName, tags, mappedAction);
-                } }, this.createSuccessChain(actionName, tags, doubleEmptyRequestAction)), this.createFailureChain(actionName, tags, doubleEmptyRequestAction, doubleEmptySuccessAction)));
+                } }, this.createSuccessChain(actionName, tags, doubleEmptyRequestAction)));
         };
         // Success chain:
         this.createSuccessChain = (actionName, tags, requestAction) => {
             const successName = this.getSuccessName(actionName);
             const successTags = ["Success", ...tags];
-            const doubleEmptyAction = this.produceMethodDoubleEmpty(actionName, successName, successTags);
+            const doubleEmptySuccessAction = this.produceMethodDoubleEmpty(actionName, successName, successTags);
             return (Object.assign({ 
                 /**
                  * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
@@ -219,8 +216,8 @@ class Area {
                          */
                         successProduce: (successProducer) => {
                             let _successAction = this.produceMethod(actionName, successName, successTags, successAction, successProducer);
-                            return this.createFailureChain(actionName, tags, requestAction, _successAction);
-                        } }, this.createFailureChain(actionName, tags, requestAction, emptyProducer));
+                            return this.createClearChain(actionName, tags, requestAction, _successAction);
+                        } }, this.createClearChain(actionName, tags, requestAction, emptyProducer));
                 }, 
                 /**
                  * fetch - produce success (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -232,11 +229,52 @@ class Area {
                  */
                 successProduce: (successProducer) => {
                     const fetchSuccessAction = this.produceMethodEmptyAction(actionName, successName, successTags, successProducer);
-                    return this.createFailureChain(actionName, tags, requestAction, fetchSuccessAction);
-                } }, this.createFailureChain(actionName, tags, requestAction, doubleEmptyAction)));
+                    return this.createClearChain(actionName, tags, requestAction, fetchSuccessAction);
+                } }, this.createClearChain(actionName, tags, requestAction, doubleEmptySuccessAction)));
+        };
+        // Clear chain:
+        this.createClearChain = (actionName, tags, requestAction, successAction) => {
+            const clearName = this.getClearName(actionName);
+            const clearTags = ["Clear", ...tags];
+            const doubleEmptyAction = this.produceMethodDoubleEmpty(actionName, clearName, clearTags);
+            return (Object.assign({ 
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: (clearAction) => {
+                    const emptyProducer = this.produceMethodEmptyProducer(actionName, clearName, clearTags, clearAction);
+                    return Object.assign({ 
+                        /**
+                         * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer) => {
+                            let _clearAction = this.produceMethod(actionName, clearName, clearTags, clearAction, clearProducer);
+                            return this.createFailureChain(actionName, tags, requestAction, successAction, _clearAction);
+                        } }, this.createFailureChain(actionName, tags, requestAction, successAction, emptyProducer));
+                }, 
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer) => {
+                    const fetchClearAction = this.produceMethodEmptyAction(actionName, clearName, clearTags, clearProducer);
+                    return this.createFailureChain(actionName, tags, requestAction, successAction, fetchClearAction);
+                } }, this.createFailureChain(actionName, tags, requestAction, successAction, doubleEmptyAction)));
         };
         // Failure chain:
-        this.createFailureChain = (actionName, tags, requestAction, successAction) => {
+        this.createFailureChain = (actionName, tags, requestAction, successAction, clearAction) => {
             let failureName = this.getFailureName(actionName);
             const failureTags = ["Failure", ...tags];
             return ({
@@ -248,7 +286,7 @@ class Area {
                 baseFailure: () => {
                     if (this.baseOptions.baseFailureAction && this.baseOptions.baseFailureProducer) {
                         let failureAction = this.produceMethod(actionName, failureName, failureTags, this.baseOptions.baseFailureAction, this.baseOptions.baseFailureProducer);
-                        return this.finalizeChain(actionName, requestAction, successAction, failureAction);
+                        return this.finalizeChain(actionName, requestAction, successAction, clearAction, failureAction);
                     }
                     throw new Error(`redux-area fetch method: ${actionName} tried to call baseFailureAction/baseFailureReducer, but the base didn't have one. Declare it with Redux-area Base settings`);
                 },
@@ -260,7 +298,7 @@ class Area {
                 areaFailure: () => {
                     if (this.areaOptions.areaFailureAction && this.areaOptions.areaFailureProducer) {
                         let failureAction = this.produceMethod(actionName, failureName, failureTags, this.areaOptions.areaFailureAction, this.areaOptions.areaFailureProducer);
-                        return this.finalizeChain(actionName, requestAction, successAction, failureAction);
+                        return this.finalizeChain(actionName, requestAction, successAction, clearAction, failureAction);
                     }
                     throw new Error(`redux-area fetch method: ${actionName} tried to call areaFailureAction/areaFailureReducer, but the area didn't have one. Declare it with Redux-area area settings`);
                 },
@@ -282,7 +320,7 @@ class Area {
                          */
                         failureProduce: (failureProducer) => {
                             const _failureAction = this.produceMethod(actionName, failureName, failureTags, failureAction, failureProducer);
-                            return this.finalizeChain(actionName, requestAction, successAction, _failureAction);
+                            return this.finalizeChain(actionName, requestAction, successAction, clearAction, _failureAction);
                         }
                     };
                 },
@@ -296,17 +334,19 @@ class Area {
                  */
                 failureProduce: (failureProducer) => {
                     const _failureAction = this.produceMethodEmptyAction(actionName, failureName, failureTags, failureProducer);
-                    return this.finalizeChain(actionName, requestAction, successAction, _failureAction);
+                    return this.finalizeChain(actionName, requestAction, successAction, clearAction, _failureAction);
                 }
             });
         };
-        this.finalizeChain = (actionName, requestAction, successAction, failureAction) => {
+        this.finalizeChain = (actionName, requestAction, successAction, clearAction, failureAction) => {
             this.actions.push(requestAction);
             this.actions.push(successAction);
+            this.actions.push(clearAction);
             this.actions.push(failureAction);
             return {
                 request: requestAction,
                 success: successAction,
+                clear: clearAction,
                 failure: failureAction,
                 actionName
             };
@@ -332,6 +372,12 @@ class Area {
             this.requestNamePostfix = 'Request';
             this.successNamePostfix = 'Success';
             this.failureNamePostfix = 'Failure';
+        }
+        if (this.baseOptions.fetchNamePostfix && this.baseOptions.fetchNamePostfix[4]) {
+            this.clearNamePostfix = this.baseOptions.fetchNamePostfix[4];
+        }
+        else {
+            this.clearNamePostfix = 'Clear';
         }
         this.initialState = Object.assign(Object.assign({}, baseOptions.baseState), areaOptions.state);
     }
@@ -359,26 +405,24 @@ class Area {
         }
         return this.namePrefix + name;
     }
-    getRequestName(name) {
+    constructActionName(name, postFix) {
         name = this.getActionName(name);
         if (this.baseOptions.addNameSlashes) {
             name += "/";
         }
-        return name + this.requestNamePostfix;
+        return name + postFix;
+    }
+    getRequestName(name) {
+        return this.constructActionName(name, this.requestNamePostfix);
     }
     getSuccessName(name) {
-        name = this.getActionName(name);
-        if (this.baseOptions.addNameSlashes) {
-            name += "/";
-        }
-        return name + this.successNamePostfix;
+        return this.constructActionName(name, this.successNamePostfix);
     }
     getFailureName(name) {
-        name = this.getActionName(name);
-        if (this.baseOptions.addNameSlashes) {
-            name += "/";
-        }
-        return name + this.failureNamePostfix;
+        return this.constructActionName(name, this.failureNamePostfix);
+    }
+    getClearName(name) {
+        return this.constructActionName(name, this.clearNamePostfix);
     }
     rootReducer() {
         return (state = this.initialState, action) => {

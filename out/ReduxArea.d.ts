@@ -21,9 +21,10 @@ export declare type ActionCreatorInterceptorOptions = {
     actionTags: string[];
 };
 export declare type ActionCreatorInterceptor = (options: ActionCreatorInterceptorOptions) => any;
-export declare type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func, AreaActionType> = {
+export declare type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TClearAction extends Func, TFailureAction extends Func, AreaActionType> = {
     request: AreaAction<TBaseState, TAreaState, TFetchAction, AreaActionType>;
     success: AreaAction<TBaseState, TAreaState, TSuccessAction, AreaActionType>;
+    clear: AreaAction<TBaseState, TAreaState, TClearAction, AreaActionType>;
     failure: AreaAction<TBaseState, TAreaState, TFailureAction, AreaActionType>;
     actionName: string;
 };
@@ -46,12 +47,15 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
     requestNamePostfix: string;
     successNamePostfix: string;
     failureNamePostfix: string;
+    clearNamePostfix: string;
     constructor(baseOptions: IAreaBaseOptions<TBaseState, TBaseFailureAction, TBaseActionTypeInterceptor>, areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaFailureAction, TBaseActionTypeInterceptor>);
     findTagsInterceptors(tags: string[]): [TIntercept<TBaseState, ReturnType<TBaseActionTypeInterceptor>>[], TIntercept<TBaseState & TAreaState, ReturnType<TBaseActionTypeInterceptor>>[]];
     getActionName(name: string): string;
+    constructActionName(name: string, postFix: string): string;
     getRequestName(name: string): string;
     getSuccessName(name: string): string;
     getFailureName(name: string): string;
+    getClearName(name: string): string;
     rootReducer(): (state: TAreaState | undefined, action: AnyAction) => any;
     /**
      * Add a single action. \
@@ -105,13 +109,13 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
          * @example
          * .baseFailure()
          */
-        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
         /**
          * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
          * @example
          * .baseFailure()
          */
-        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
         /**
          * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
          * @param action ActionCreator
@@ -127,7 +131,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              *    draft.error = error
              * })
              */
-            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
         };
         /**
          * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -137,26 +141,26 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
          *    draft.error = error
          * })
          */
-        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
         /**
-         * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+         * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
          * @param action ActionCreator
          * @example
-         * .successAction((products: IProduct[]) => ({ products })
+         * .clearAction((products: IProduct[]) => ({ products })
          */
-        successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
+        clearAction: <TClearAction extends Func>(clearAction: TClearAction) => {
             /**
              * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
              * @example
              * .baseFailure()
              */
-            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
              * @example
              * .baseFailure()
              */
-            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
@@ -172,7 +176,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
             };
             /**
              * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -182,28 +186,28 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              *    draft.error = error
              * })
              */
-            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
             /**
-             * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
+             * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
              * @param producer A produce method that mutates the draft (state)
              * @example
              * .produce((draft, { products }) => {
              *    draft.products = products
              * })
              */
-            successProduce: (successProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TSuccessAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
@@ -219,7 +223,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -229,7 +233,433 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            };
+        };
+        /**
+         * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+         * @param producer A produce method that mutates the draft (state)
+         * @example
+         * .clearProduce((draft, { products }) => {
+         *    draft.products = products
+         * })
+         */
+        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+            /**
+             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+             * @example
+             * .baseFailure()
+             */
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+             * @example
+             * .baseFailure()
+             */
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .failureAction((error: Error) => ({ error })
+             */
+            failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
+                /**
+                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            };
+            /**
+             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .failureProduce((draft, { error }) => {
+             *    draft.error = error
+             * })
+             */
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+        };
+        /**
+         * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+         * @param action ActionCreator
+         * @example
+         * .successAction((products: IProduct[]) => ({ products })
+         */
+        successAction: <TSuccessAction extends Func>(successAction: TSuccessAction) => {
+            /**
+             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+             * @example
+             * .baseFailure()
+             */
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+             * @example
+             * .baseFailure()
+             */
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .failureAction((error: Error) => ({ error })
+             */
+            failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                /**
+                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+            };
+            /**
+             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .failureProduce((draft, { error }) => {
+             *    draft.error = error
+             * })
+             */
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .clearAction((products: IProduct[]) => ({ products })
+             */
+            clearAction: <TClearAction_1 extends Func>(clearAction: TClearAction_1) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+            };
+            /**
+             * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .clearProduce((draft, { products }) => {
+             *    draft.products = products
+             * })
+             */
+            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            };
+            /**
+             * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .produce((draft, { products }) => {
+             *    draft.products = products
+             * })
+             */
+            successProduce: (successProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TSuccessAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_1 extends Func>(clearAction: TClearAction_1) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, TClearAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
             };
         };
         /**
@@ -246,13 +676,13 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              * @example
              * .baseFailure()
              */
-            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
              * @example
              * .baseFailure()
              */
-            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
@@ -268,7 +698,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             };
             /**
              * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -278,7 +708,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              *    draft.error = error
              * })
              */
-            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .clearAction((products: IProduct[]) => ({ products })
+             */
+            clearAction: <TClearAction extends Func>(clearAction: TClearAction) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_1 extends Func>(failureAction: TFailureAction_1) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_1 extends Func>(failureAction: TFailureAction_1) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, TFailureAction_1, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+            };
+            /**
+             * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .clearProduce((draft, { products }) => {
+             *    draft.products = products
+             * })
+             */
+            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction extends Func>(failureAction: TFailureAction) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            };
         };
         /**
          * Fetch - request action - actionCreator ('type' will be added automatically + props defined in AreaBase)
@@ -292,20 +864,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              * @example
              * .baseFailure()
              */
-            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
              * @example
              * .baseFailure()
              */
-            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
              * @example
              * .failureAction((error: Error) => ({ error })
              */
-            failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+            failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
                 /**
                  * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                  * @param producer A produce method that mutates the draft (state)
@@ -314,7 +886,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
             };
             /**
              * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -324,7 +896,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              *    draft.error = error
              * })
              */
-            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .clearAction((products: IProduct[]) => ({ products })
+             */
+            clearAction: <TClearAction_2 extends Func>(clearAction: TClearAction_2) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+            };
+            /**
+             * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .clearProduce((draft, { products }) => {
+             *    draft.products = products
+             * })
+             */
+            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            };
             /**
              * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
@@ -337,20 +1051,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
                  * @example
                  * .failureAction((error: Error) => ({ error })
                  */
-                failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
                     /**
                      * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -359,7 +1073,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -369,7 +1083,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_3 extends Func>(clearAction: TClearAction_3) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
                 /**
                  * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
                  * @param producer A produce method that mutates the draft (state)
@@ -384,20 +1240,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      * @example
                      * .baseFailure()
                      */
-                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                      * @example
                      * .baseFailure()
                      */
-                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                      * @param action ActionCreator
                      * @example
                      * .failureAction((error: Error) => ({ error })
                      */
-                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                    failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
                         /**
                          * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                          * @param producer A produce method that mutates the draft (state)
@@ -406,7 +1262,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          *    draft.error = error
                          * })
                          */
-                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
                     };
                     /**
                      * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -416,7 +1272,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .clearAction((products: IProduct[]) => ({ products })
+                     */
+                    clearAction: <TClearAction_3 extends Func>(clearAction: TClearAction_3) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                    };
+                    /**
+                     * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .clearProduce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
                 };
             };
             /**
@@ -433,20 +1431,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
                  * @example
                  * .failureAction((error: Error) => ({ error })
                  */
-                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
                     /**
                      * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -455,7 +1453,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -465,7 +1463,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_2 extends Func>(clearAction: TClearAction_2) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
             };
             /**
              * fetch - produce request (props from 'action' method, plus auto generated 'type' and props from AreaBase)
@@ -481,20 +1621,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
                  * @example
                  * .failureAction((error: Error) => ({ error })
                  */
-                failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
                     /**
                      * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -503,7 +1643,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -513,7 +1653,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_2 extends Func>(clearAction: TClearAction_2) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
                 /**
                  * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
@@ -526,20 +1808,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      * @example
                      * .baseFailure()
                      */
-                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                      * @example
                      * .baseFailure()
                      */
-                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                      * @param action ActionCreator
                      * @example
                      * .failureAction((error: Error) => ({ error })
                      */
-                    failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                    failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
                         /**
                          * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                          * @param producer A produce method that mutates the draft (state)
@@ -548,7 +1830,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          *    draft.error = error
                          * })
                          */
-                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
                     };
                     /**
                      * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -558,7 +1840,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .clearAction((products: IProduct[]) => ({ products })
+                     */
+                    clearAction: <TClearAction_3 extends Func>(clearAction: TClearAction_3) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                    };
+                    /**
+                     * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .clearProduce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
                     /**
                      * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -573,20 +1997,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          * @example
                          * .baseFailure()
                          */
-                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                         /**
                          * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                          * @example
                          * .baseFailure()
                          */
-                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                         /**
                          * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                          * @param action ActionCreator
                          * @example
                          * .failureAction((error: Error) => ({ error })
                          */
-                        failureAction: <TFailureAction_3 extends Func>(failureAction: TFailureAction_3) => {
+                        failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
                             /**
                              * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                              * @param producer A produce method that mutates the draft (state)
@@ -595,7 +2019,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                              *    draft.error = error
                              * })
                              */
-                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TFailureAction_3, ReturnType<TBaseActionTypeInterceptor>>;
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
                         };
                         /**
                          * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -605,7 +2029,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          *    draft.error = error
                          * })
                          */
-                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .clearAction((products: IProduct[]) => ({ products })
+                         */
+                        clearAction: <TClearAction_3 extends Func>(clearAction: TClearAction_3) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { products }) => {
+                             *    draft.products = products
+                             * })
+                             */
+                            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_3, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                                /**
+                                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                                 * @example
+                                 * .baseFailure()
+                                 */
+                                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                                /**
+                                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                                 * @example
+                                 * .baseFailure()
+                                 */
+                                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                                /**
+                                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                                 * @param action ActionCreator
+                                 * @example
+                                 * .failureAction((error: Error) => ({ error })
+                                 */
+                                failureAction: <TFailureAction_7 extends Func>(failureAction: TFailureAction_7) => {
+                                    /**
+                                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                     * @param producer A produce method that mutates the draft (state)
+                                     * @example
+                                     * .produce((draft, { error }) => {
+                                     *    draft.error = error
+                                     * })
+                                     */
+                                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, TFailureAction_7, ReturnType<TBaseActionTypeInterceptor>>;
+                                };
+                                /**
+                                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .failureProduce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, TClearAction_3, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                        };
+                        /**
+                         * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .clearProduce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_6 extends Func>(failureAction: TFailureAction_6) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_6, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, TSuccessAction_1, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
                     };
                 };
                 /**
@@ -622,20 +2188,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      * @example
                      * .baseFailure()
                      */
-                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                      * @example
                      * .baseFailure()
                      */
-                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                      * @param action ActionCreator
                      * @example
                      * .failureAction((error: Error) => ({ error })
                      */
-                    failureAction: <TFailureAction_2 extends Func>(failureAction: TFailureAction_2) => {
+                    failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
                         /**
                          * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                          * @param producer A produce method that mutates the draft (state)
@@ -644,7 +2210,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          *    draft.error = error
                          * })
                          */
-                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_2, ReturnType<TBaseActionTypeInterceptor>>;
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
                     };
                     /**
                      * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -654,7 +2220,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .clearAction((products: IProduct[]) => ({ products })
+                     */
+                    clearAction: <TClearAction_2 extends Func>(clearAction: TClearAction_2) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_2, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                    };
+                    /**
+                     * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .clearProduce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
                 };
             };
         };
@@ -672,20 +2380,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              * @example
              * .baseFailure()
              */
-            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
              * @example
              * .baseFailure()
              */
-            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
             /**
              * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
              * @example
              * .failureAction((error: Error) => ({ error })
              */
-            failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+            failureAction: <TFailureAction_8 extends Func>(failureAction: TFailureAction_8) => {
                 /**
                  * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                  * @param producer A produce method that mutates the draft (state)
@@ -694,7 +2402,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>;
             };
             /**
              * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -704,7 +2412,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
              *    draft.error = error
              * })
              */
-            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            /**
+             * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+             * @param action ActionCreator
+             * @example
+             * .clearAction((products: IProduct[]) => ({ products })
+             */
+            clearAction: <TClearAction_4 extends Func>(clearAction: TClearAction_4) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_9 extends Func>(failureAction: TFailureAction_9) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .produce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_9 extends Func>(failureAction: TFailureAction_9) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+            };
+            /**
+             * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+             * @param producer A produce method that mutates the draft (state)
+             * @example
+             * .clearProduce((draft, { products }) => {
+             *    draft.products = products
+             * })
+             */
+            clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                 * @example
+                 * .baseFailure()
+                 */
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                 * @example
+                 * .baseFailure()
+                 */
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .failureAction((error: Error) => ({ error })
+                 */
+                failureAction: <TFailureAction_8 extends Func>(failureAction: TFailureAction_8) => {
+                    /**
+                     * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>;
+                };
+                /**
+                 * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .failureProduce((draft, { error }) => {
+                 *    draft.error = error
+                 * })
+                 */
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+            };
             /**
              * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
              * @param action ActionCreator
@@ -717,20 +2567,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
                  * @example
                  * .failureAction((error: Error) => ({ error })
                  */
-                failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                failureAction: <TFailureAction_10 extends Func>(failureAction: TFailureAction_10) => {
                     /**
                      * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -739,7 +2589,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -749,7 +2599,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_5 extends Func>(clearAction: TClearAction_5) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_11 extends Func>(failureAction: TFailureAction_11) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_11 extends Func>(failureAction: TFailureAction_11) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_10 extends Func>(failureAction: TFailureAction_10) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
                 /**
                  * fetch - produce success (props from 'successAction' method, plus auto generated 'type' and props from AreaBase)
                  * @param producer A produce method that mutates the draft (state)
@@ -764,20 +2756,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      * @example
                      * .baseFailure()
                      */
-                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                      * @example
                      * .baseFailure()
                      */
-                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                     /**
                      * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                      * @param action ActionCreator
                      * @example
                      * .failureAction((error: Error) => ({ error })
                      */
-                    failureAction: <TFailureAction_5 extends Func>(failureAction: TFailureAction_5) => {
+                    failureAction: <TFailureAction_10 extends Func>(failureAction: TFailureAction_10) => {
                         /**
                          * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                          * @param producer A produce method that mutates the draft (state)
@@ -786,7 +2778,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                          *    draft.error = error
                          * })
                          */
-                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TFailureAction_5, ReturnType<TBaseActionTypeInterceptor>>;
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>;
                     };
                     /**
                      * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -796,7 +2788,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .clearAction((products: IProduct[]) => ({ products })
+                     */
+                    clearAction: <TClearAction_5 extends Func>(clearAction: TClearAction_5) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_11 extends Func>(failureAction: TFailureAction_11) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { products }) => {
+                         *    draft.products = products
+                         * })
+                         */
+                        clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_5, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                             * @example
+                             * .baseFailure()
+                             */
+                            baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                             * @example
+                             * .baseFailure()
+                             */
+                            areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                            /**
+                             * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                             * @param action ActionCreator
+                             * @example
+                             * .failureAction((error: Error) => ({ error })
+                             */
+                            failureAction: <TFailureAction_11 extends Func>(failureAction: TFailureAction_11) => {
+                                /**
+                                 * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                                 * @param producer A produce method that mutates the draft (state)
+                                 * @example
+                                 * .produce((draft, { error }) => {
+                                 *    draft.error = error
+                                 * })
+                                 */
+                                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, TFailureAction_11, ReturnType<TBaseActionTypeInterceptor>>;
+                            };
+                            /**
+                             * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .failureProduce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, TClearAction_5, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                    };
+                    /**
+                     * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .clearProduce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_10 extends Func>(failureAction: TFailureAction_10) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_10, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, TSuccessAction_2, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
                 };
             };
             /**
@@ -813,20 +2947,20 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  * @example
                  * .baseFailure()
                  */
-                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
                  * @example
                  * .baseFailure()
                  */
-                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
                 /**
                  * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
                  * @param action ActionCreator
                  * @example
                  * .failureAction((error: Error) => ({ error })
                  */
-                failureAction: <TFailureAction_4 extends Func>(failureAction: TFailureAction_4) => {
+                failureAction: <TFailureAction_8 extends Func>(failureAction: TFailureAction_8) => {
                     /**
                      * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
                      * @param producer A produce method that mutates the draft (state)
@@ -835,7 +2969,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                      *    draft.error = error
                      * })
                      */
-                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_4, ReturnType<TBaseActionTypeInterceptor>>;
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>;
                 };
                 /**
                  * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
@@ -845,7 +2979,149 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
                  *    draft.error = error
                  * })
                  */
-                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                /**
+                 * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                 * @param action ActionCreator
+                 * @example
+                 * .clearAction((products: IProduct[]) => ({ products })
+                 */
+                clearAction: <TClearAction_4 extends Func>(clearAction: TClearAction_4) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_9 extends Func>(failureAction: TFailureAction_9) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .produce((draft, { products }) => {
+                     *    draft.products = products
+                     * })
+                     */
+                    clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction_4, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                         * @example
+                         * .baseFailure()
+                         */
+                        baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                         * @example
+                         * .baseFailure()
+                         */
+                        areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                        /**
+                         * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                         * @param action ActionCreator
+                         * @example
+                         * .failureAction((error: Error) => ({ error })
+                         */
+                        failureAction: <TFailureAction_9 extends Func>(failureAction: TFailureAction_9) => {
+                            /**
+                             * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                             * @param producer A produce method that mutates the draft (state)
+                             * @example
+                             * .produce((draft, { error }) => {
+                             *    draft.error = error
+                             * })
+                             */
+                            failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, TFailureAction_9, ReturnType<TBaseActionTypeInterceptor>>;
+                        };
+                        /**
+                         * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .failureProduce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TClearAction_4, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                };
+                /**
+                 * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+                 * @param producer A produce method that mutates the draft (state)
+                 * @example
+                 * .clearProduce((draft, { products }) => {
+                 *    draft.products = products
+                 * })
+                 */
+                clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the AreaBase.
+                     * @example
+                     * .baseFailure()
+                     */
+                    baseFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TBaseFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Standard Fetch Failure produce method (including failure action). This is defined in the Area.
+                     * @example
+                     * .baseFailure()
+                     */
+                    areaFailure: () => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TAreaFailureAction, ReturnType<TBaseActionTypeInterceptor>>;
+                    /**
+                     * Fetch - failure action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+                     * @param action ActionCreator
+                     * @example
+                     * .failureAction((error: Error) => ({ error })
+                     */
+                    failureAction: <TFailureAction_8 extends Func>(failureAction: TFailureAction_8) => {
+                        /**
+                         * fetch - produce failure (props from 'failureAction' method, plus auto generated 'type' and props from AreaBase)
+                         * @param producer A produce method that mutates the draft (state)
+                         * @example
+                         * .produce((draft, { error }) => {
+                         *    draft.error = error
+                         * })
+                         */
+                        failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, TFailureAction_8, ReturnType<TBaseActionTypeInterceptor>>;
+                    };
+                    /**
+                     * fetch - produce failure (without action defined / auto generated action with 'type' and props from AreaBase)
+                     * @param producer A produce method that mutates the draft (state)
+                     * @example
+                     * .failureProduce((draft, { error }) => {
+                     *    draft.error = error
+                     * })
+                     */
+                    failureProduce: (failureProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => FetchAreaAction<TBaseState, TAreaState, () => EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, ReturnType<TBaseActionTypeInterceptor>>;
+                };
             };
         };
     };
@@ -858,6 +3134,7 @@ declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAre
     private createAddChain;
     private createRequestChain;
     private createSuccessChain;
+    private createClearChain;
     private createFailureChain;
     private finalizeChain;
 }

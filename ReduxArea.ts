@@ -10,9 +10,10 @@ export type ReturnTypeAction<TAction extends Func, AreaActionType> = ReturnType<
 export type ActionCreatorInterceptorOptions = { action: { type: string }, actionName: string, actionTags: string[] }
 export type ActionCreatorInterceptor = (options: ActionCreatorInterceptorOptions) => any
 
-export type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TFailureAction extends Func, AreaActionType> = {
+export type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, TSuccessAction extends Func, TClearAction extends Func, TFailureAction extends Func, AreaActionType> = {
    request: AreaAction<TBaseState, TAreaState, TFetchAction, AreaActionType>
    success: AreaAction<TBaseState, TAreaState, TSuccessAction, AreaActionType>
+   clear: AreaAction<TBaseState, TAreaState, TClearAction, AreaActionType>
    failure: AreaAction<TBaseState, TAreaState, TFailureAction, AreaActionType>
    actionName: string
 }
@@ -26,15 +27,6 @@ export type AreaAction<TBaseState, TAreaState, TAction extends Func, AreaActionT
    use: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAction>) => void,
    type: ReturnTypeAction<TAction, AreaActionType>
 }
-
-export const createUUID = () => { /*uuidv4*/
-  return ('' + 1e7 + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c: any) =>
-    (
-      c ^
-      (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
-    ).toString(16)
-  )
-} 
 
 class Area<
    TBaseState,
@@ -50,6 +42,7 @@ class Area<
    requestNamePostfix: string
    successNamePostfix: string
    failureNamePostfix: string
+   clearNamePostfix: string
 
    constructor(
       public baseOptions: IAreaBaseOptions<
@@ -85,6 +78,12 @@ class Area<
          this.successNamePostfix = 'Success'
          this.failureNamePostfix = 'Failure'
       }
+      if (this.baseOptions.fetchNamePostfix && this.baseOptions.fetchNamePostfix[4]) {
+         this.clearNamePostfix = this.baseOptions.fetchNamePostfix[4]
+      } else {
+         this.clearNamePostfix = 'Clear'
+      }
+
       this.initialState = {
          ...baseOptions.baseState,
          ...areaOptions.state
@@ -118,28 +117,28 @@ class Area<
       return this.namePrefix + name
    }
 
-   public getRequestName(name: string) {
+   public constructActionName(name: string, postFix: string) {
       name = this.getActionName(name)
       if (this.baseOptions.addNameSlashes) {
          name += "/"
       }
-      return name + this.requestNamePostfix
+      return name + postFix
+   }
+
+   public getRequestName(name: string) {
+      return this.constructActionName(name, this.requestNamePostfix)
    }
 
    public getSuccessName(name: string) {
-      name = this.getActionName(name)
-      if (this.baseOptions.addNameSlashes) {
-         name += "/"
-      }
-      return name + this.successNamePostfix
+      return this.constructActionName(name, this.successNamePostfix)
    }
 
    public getFailureName(name: string) {
-      name = this.getActionName(name)
-      if (this.baseOptions.addNameSlashes) {
-         name += "/"
-      }
-      return name + this.failureNamePostfix
+      return this.constructActionName(name, this.failureNamePostfix)
+   }
+
+   public getClearName(name: string) {
+      return this.constructActionName(name, this.clearNamePostfix)
    }
 
    public rootReducer() {
@@ -400,17 +399,13 @@ class Area<
       tags: string[] = []
    ) => {
       const requestName = this.getRequestName(actionName)
-      const successName = this.getSuccessName(actionName)
 
       const requestTags = ["Request", ...tags]
-      const successTags = ["Success", ...tags]
 
       const doubleEmptyRequestAction = this.produceMethodDoubleEmpty(
          actionName, requestName, requestTags
       )
-      const doubleEmptySuccessAction = this.produceMethodDoubleEmpty(
-         actionName, successName, successTags
-      )
+
       return ({
          /**
           * Fetch - request action - actionCreator ('type' will be added automatically + props defined in AreaBase)
@@ -441,10 +436,7 @@ class Area<
                },
                ...this.createSuccessChain<TFetchAction>(
                   actionName, tags, emptyProducer
-               ),
-               ...this.createFailureChain<TFetchAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
-                  actionName, tags, emptyProducer, doubleEmptySuccessAction
-               ),
+               )
             }
          },
          /**
@@ -465,10 +457,7 @@ class Area<
          },
          ...this.createSuccessChain<EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
             actionName, tags, doubleEmptyRequestAction
-         ),
-         ...this.createFailureChain<EmptyAction<ReturnType<TBaseActionTypeInterceptor>>, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
-            actionName, tags, doubleEmptyRequestAction, doubleEmptySuccessAction
-         ),
+         )
       })
    }
 
@@ -482,9 +471,10 @@ class Area<
 
       const successTags = ["Success", ...tags]
 
-      const doubleEmptyAction = this.produceMethodDoubleEmpty(
+      const doubleEmptySuccessAction = this.produceMethodDoubleEmpty(
          actionName, successName, successTags
       )
+
       return ({
          /**
           * Fetch - success action - actionCreator ('type' will be added automatically + props defined in AreaBase)
@@ -509,11 +499,11 @@ class Area<
                   let _successAction = this.produceMethod<TSuccessAction>(
                      actionName, successName, successTags, successAction, successProducer
                   )
-                  return this.createFailureChain<TFetchRequestAction, TSuccessAction>(
+                  return this.createClearChain<TFetchRequestAction, TSuccessAction>(
                      actionName, tags, requestAction, _successAction
                   )
                },
-               ...this.createFailureChain<TFetchRequestAction, TSuccessAction>(
+               ...this.createClearChain<TFetchRequestAction, TSuccessAction>(
                   actionName, tags, requestAction, emptyProducer
                ),
             }
@@ -530,12 +520,81 @@ class Area<
             const fetchSuccessAction = this.produceMethodEmptyAction(
                actionName, successName, successTags, successProducer
             )
-            return this.createFailureChain<TFetchRequestAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
+            return this.createClearChain<TFetchRequestAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
                actionName, tags, requestAction, fetchSuccessAction
             )
          },
-         ...this.createFailureChain<TFetchRequestAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
-            actionName, tags, requestAction, doubleEmptyAction
+         ...this.createClearChain<TFetchRequestAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
+            actionName, tags, requestAction, doubleEmptySuccessAction
+         )
+      })
+   }
+
+   // Clear chain:
+   private createClearChain = <TFetchRequestAction extends Func, TFetchSuccessAction extends Func>(
+      actionName: string,
+      tags: string[],
+      requestAction: AreaAction<TBaseState, TAreaState, TFetchRequestAction, ReturnType<TBaseActionTypeInterceptor>>,
+      successAction: AreaAction<TBaseState, TAreaState, TFetchSuccessAction, ReturnType<TBaseActionTypeInterceptor>>,
+   ) => {
+      const clearName = this.getClearName(actionName)
+
+      const clearTags = ["Clear", ...tags]
+
+      const doubleEmptyAction = this.produceMethodDoubleEmpty(
+         actionName, clearName, clearTags
+      )
+      return ({
+         /**
+          * Fetch - clear action - actionCreator ('type' will be added automatically + props defined in AreaBase)
+          * @param action ActionCreator
+          * @example
+          * .clearAction((products: IProduct[]) => ({ products })
+          */
+         clearAction: <TClearAction extends Func>(clearAction: TClearAction) => {
+            const emptyProducer = this.produceMethodEmptyProducer<TClearAction>(
+               actionName, clearName, clearTags, clearAction
+            )
+            return {
+               /**
+                * fetch - produce clear (props from 'clearAction' method, plus auto generated 'type' and props from AreaBase)
+                * @param producer A produce method that mutates the draft (state)
+                * @example
+                * .produce((draft, { products }) => {
+                *    draft.products = products
+                * })
+                */
+               clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: ReturnTypeAction<TClearAction, ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+                  let _clearAction = this.produceMethod<TClearAction>(
+                     actionName, clearName, clearTags, clearAction, clearProducer
+                  )
+                  return this.createFailureChain<TFetchRequestAction, TFetchSuccessAction, TClearAction>(
+                     actionName, tags, requestAction, successAction, _clearAction
+                  )
+               },
+               ...this.createFailureChain<TFetchRequestAction, TFetchSuccessAction, TClearAction>(
+                  actionName, tags, requestAction, successAction, emptyProducer
+               ),
+            }
+         },
+         /**
+          * fetch - produce clear (without action defined / auto generated action with 'type' and props from AreaBase)
+          * @param producer A produce method that mutates the draft (state)
+          * @example
+          * .clearProduce((draft, { products }) => {
+          *    draft.products = products
+          * })
+          */
+         clearProduce: (clearProducer: (draft: Draft<TBaseState & TAreaState>, action: EmptyActionType<ReturnType<TBaseActionTypeInterceptor>>) => void) => {
+            const fetchClearAction = this.produceMethodEmptyAction(
+               actionName, clearName, clearTags, clearProducer
+            )
+            return this.createFailureChain<TFetchRequestAction, TFetchSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
+               actionName, tags, requestAction, successAction, fetchClearAction
+            )
+         },
+         ...this.createFailureChain<TFetchRequestAction, TFetchSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
+            actionName, tags, requestAction, successAction, doubleEmptyAction
          )
       })
    }
@@ -544,12 +603,14 @@ class Area<
    private createFailureChain = <
       TFetchRequestAction extends Func,
       TFetchSuccessAction extends Func,
+      TFetchClearAction extends Func,
       >(
          actionName: string,
          tags: string[],
          requestAction: AreaAction<TBaseState, TAreaState, TFetchRequestAction, ReturnType<TBaseActionTypeInterceptor>>,
-         successAction: AreaAction<TBaseState, TAreaState, TFetchSuccessAction, ReturnType<TBaseActionTypeInterceptor>>
-      ) => {
+         successAction: AreaAction<TBaseState, TAreaState, TFetchSuccessAction, ReturnType<TBaseActionTypeInterceptor>>,
+         clearAction: AreaAction<TBaseState, TAreaState, TFetchClearAction, ReturnType<TBaseActionTypeInterceptor>>,
+   ) => {
       let failureName = this.getFailureName(actionName)
 
       const failureTags = ["Failure", ...tags]
@@ -565,8 +626,8 @@ class Area<
                let failureAction = this.produceMethod<TBaseFailureAction>(
                   actionName, failureName, failureTags, this.baseOptions.baseFailureAction, this.baseOptions.baseFailureProducer
                )
-               return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TBaseFailureAction>(
-                  actionName, requestAction, successAction, failureAction
+               return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TBaseFailureAction>(
+                  actionName, requestAction, successAction, clearAction, failureAction
                )
             }
             throw new Error(`redux-area fetch method: ${actionName} tried to call baseFailureAction/baseFailureReducer, but the base didn't have one. Declare it with Redux-area Base settings`)
@@ -581,8 +642,8 @@ class Area<
                let failureAction = this.produceMethod<TAreaFailureAction>(
                   actionName, failureName, failureTags, this.areaOptions.areaFailureAction, this.areaOptions.areaFailureProducer
                )
-               return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TAreaFailureAction>(
-                  actionName, requestAction, successAction, failureAction
+               return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TAreaFailureAction>(
+                  actionName, requestAction, successAction, clearAction, failureAction
                )
             }
             throw new Error(`redux-area fetch method: ${actionName} tried to call areaFailureAction/areaFailureReducer, but the area didn't have one. Declare it with Redux-area area settings`)
@@ -607,8 +668,8 @@ class Area<
                   const _failureAction = this.produceMethod<TFailureAction>(
                      actionName, failureName, failureTags, failureAction, failureProducer
                   )
-                  return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TFailureAction>(
-                     actionName, requestAction, successAction, _failureAction
+                  return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFailureAction>(
+                     actionName, requestAction, successAction, clearAction, _failureAction
                   )
                }
             }
@@ -625,8 +686,8 @@ class Area<
             const _failureAction = this.produceMethodEmptyAction(
                actionName, failureName, failureTags, failureProducer
             )
-            return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
-               actionName, requestAction, successAction, _failureAction
+            return this.finalizeChain<TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, EmptyAction<ReturnType<TBaseActionTypeInterceptor>>>(
+               actionName, requestAction, successAction, clearAction, _failureAction
             )
          }
       })
@@ -636,22 +697,26 @@ class Area<
       // Other stuff
       TFetchRequestAction extends Func,
       TFetchSuccessAction extends Func,
+      TFetchClearAction extends Func,
       TFetchFailureAction extends Func,
       >(
          actionName: string,
          requestAction: AreaAction<TBaseState, TAreaState, TFetchRequestAction, ReturnType<TBaseActionTypeInterceptor>>,
          successAction: AreaAction<TBaseState, TAreaState, TFetchSuccessAction, ReturnType<TBaseActionTypeInterceptor>>,
+         clearAction: AreaAction<TBaseState, TAreaState, TFetchClearAction, ReturnType<TBaseActionTypeInterceptor>>,
          failureAction: AreaAction<TBaseState, TAreaState, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>
       ) => {
       this.actions.push(requestAction as unknown as ReduxAction)
       this.actions.push(successAction as unknown as ReduxAction)
+      this.actions.push(clearAction as unknown as ReduxAction)
       this.actions.push(failureAction as unknown as ReduxAction)
       return {
          request: requestAction,
          success: successAction,
+         clear: clearAction,
          failure: failureAction,
          actionName
-      } as FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>
+      } as FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>
    }
 
 }
@@ -788,4 +853,6 @@ export var FetchAreaBase = (baseName = "App") => new AreaBase({
    }
 })
 
+
 export default AreaBase
+

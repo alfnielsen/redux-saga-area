@@ -1,3 +1,50 @@
+## 0.4.13
+
+### 'clear' added to addFetch
+
+Add `clearAction` and `clearProduce` to `addFetch` chain. (Before Failure)
+
+Like the others chain methods it can be omitted.
+
+It will have the following tags: 'Clear' (and 'Fetch', 'All' ect..)
+
+Info added to the wiki (See 'Tags and interception' + 'Custom Area Base')
+
+## 0.4.11 + 0.4.12 tag:next redux-area@next
+
+TEST of new 'clear' on fetches.
+
+Add clearAction and clearProduce to addFetch chain. (Before Failure)
+
+This means that the addFetch will now create 4 actions instead of 3.
+
+The clear method is added to make it easy to reset data/tracking.
+This is something that not all fetch need (but the 'extra' action don't harm anything)
+
+But it will enable you to intercept the clear with tracing status.
+(Which means that the clear never have to actually be manual added, but it cn give the value of easy tracking. )
+
+## 0.4.10 tag:next redux-area@next
+
+trackingUuid has been removed again.
+
+trackingUuid implementation needs to be done by the application,
+because a success or failure can be called from any where in any order.
+FX: two request are send with the same action.
+When the success/failure is called a trackingUuid need to be provided from the caller.
+
+Functionality like this can be added in the AreaBase by intercepting the action for a request,
+but the application/view/saga need to be the one that does the tracking
+(Its the only one knowing with success/failure matches the request)
+
+This kind of functionality is needed, so there will be posted examples on redux-area wiki,
+when examples of solutions has been tested.
+
+## 0.4.8 + 0.4.9 tag:next redux-area@next
+
+Test for including trackingUuid.
+(This implementation did not give ny value that actionName don't provide)
+
 ## 0.4.7
 
 Final build that (target es6) with a production tested version of 0.4.x
