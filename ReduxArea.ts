@@ -1,4 +1,4 @@
-import produce, { Draft, Immutable } from "immer"
+import { Draft, Immutable, produce } from "immer"
 import { AnyAction, Reducer } from 'redux'
 
 export type Func = (...args: any) => any
@@ -28,7 +28,7 @@ export type AreaAction<TBaseState, TAreaState, TAction extends Func, AreaActionT
    type: ReturnTypeAction<TAction, AreaActionType>
 }
 
-class Area<
+export class Area<
    TBaseState,
    TAreaState,
    TBaseFailureAction extends Func,
@@ -752,11 +752,12 @@ export interface IAreaOptions<
    areaInterceptors?: { [tag: string]: TIntercept<TBaseState & TAreaState, ReturnType<TBaseActionTypeInterceptor>>[] }
 }
 
-class AreaBase<
+export class AreaBase<
    TBaseState,
    TBaseStandardFailure extends Func,
    TBaseActionsIntercept extends Func,
    >{
+   areaType: Area<TBaseState, unknown, TBaseStandardFailure, Func, TBaseActionsIntercept>
 
    constructor(
       public baseOptions: IAreaBaseOptions<
@@ -765,6 +766,7 @@ class AreaBase<
          TBaseActionsIntercept
       >
    ) {
+      this.areaType = this.CreateArea({ state: {} as unknown })
    }
    public CreateArea<
       TAreaState,
@@ -783,8 +785,8 @@ class AreaBase<
       )
       return area
    }
-
 }
+
 
 export interface IFetchAreaBaseState {
    loading: boolean,
@@ -808,6 +810,8 @@ export var SimpleAreaBase = (baseName = "App") => new AreaBase({
    baseState: {},
    baseActionsIntercept: (/*{ actionName }: ActionCreatorInterceptorOptions*/) => ({/*actionName*/ }), // simple action don't add actionName
 })
+
+
 
 export var FetchAreaBase = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,

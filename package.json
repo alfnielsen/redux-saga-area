@@ -1,6 +1,6 @@
 {
   "name": "redux-area",
-  "version": "0.4.13",
+  "version": "0.4.15",
   "description": "simplified strongly typed redux",
   "keywords": [
     "redux",
@@ -20,6 +20,7 @@
   "homepage": "https://github.com/alfnielsen/redux-area#readme",
   "dependencies": {
     "immer": "^5.3.6",
-    "redux": "^4.0.5"
+    "redux": "^4.0.5",
+    "redux-saga": "^1.1.3"
   }
 }

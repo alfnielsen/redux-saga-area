@@ -26,7 +26,7 @@ class Area {
             });
             if (baseIntercept || areaIntercept) {
                 Object.defineProperty(mappedAction, 'reducer', {
-                    value: (state, action) => immer_1.default(state, draft => {
+                    value: (state, action) => immer_1.produce(state, draft => {
                         producer(draft, action);
                         baseIntercept && baseIntercept.forEach(inter => inter(draft, action));
                         areaIntercept && areaIntercept.forEach(inter => inter(draft, action));
@@ -36,7 +36,7 @@ class Area {
             }
             else {
                 Object.defineProperty(mappedAction, 'reducer', {
-                    value: immer_1.default(producer),
+                    value: immer_1.produce(producer),
                     writable: false
                 });
             }
@@ -456,15 +456,18 @@ class Area {
         return this.createRequestChain(name, ["All", "Fetch", ...(this.areaOptions.tags || []), ...tags]);
     }
 }
+exports.Area = Area;
 class AreaBase {
     constructor(baseOptions) {
         this.baseOptions = baseOptions;
+        this.areaType = this.CreateArea({ state: {} });
     }
     CreateArea(areaOptions) {
         const area = new Area(this.baseOptions, areaOptions);
         return area;
     }
 }
+exports.AreaBase = AreaBase;
 exports.SimpleAreaBase = (baseName = "App") => new AreaBase({
     baseNamePrefix: "@@" + baseName,
     addNameSlashes: true,

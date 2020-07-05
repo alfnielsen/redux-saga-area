@@ -1,4 +1,4 @@
-import { FetchAreaBase } from "./ReduxArea"
+import AreaBase, { FetchAreaBase } from "./ReduxArea"
 
 // Optional state interface.
 // You can also get it from (typeof area.initialState)
@@ -16,7 +16,6 @@ const area = FetchAreaBase("@@MyApp").CreateArea({
       types: []
    } as IMyAreaState
 })
-
 
 const getAllType = area
    .addFetch('getAllType')
@@ -82,5 +81,59 @@ export const MyAreaActions = {
 }
 
 export const MyAreaInitState = area.initialState
-export const MyAreaRootReducer = area.rootReducer
+export const MyAreaRootReducer = area.rootReducer()
+
+
+// -------- Entity Area Base
+
+export interface IEntity {
+   id: number
+}
+export interface IEntityAreaBaseState {
+   current?: IEntity
+   error?: Error
+   errorMessage?: string
+}
+
+export const EntityAreaBase = new AreaBase({
+   baseNamePrefix: "@@App/Entity",
+   addNameSlashes: true,
+   addShortNameSlashes: true,
+   baseState: {
+      current: undefined,
+   } as IEntityAreaBaseState,
+   baseActionsIntercept: () => ({}),
+   baseFailureAction: (error: Error) => ({ error }),
+   baseFailureProducer: ((draft, { error }) => {
+      draft.error = error
+      draft.errorMessage = error.message
+   }),
+})
+
+const StandardLoadEntity = <TEntity extends IEntity>(name: string, area: typeof EntityAreaBase.areaType) => {
+   return area.addFetch(name)
+      .action((id: number) => ({ id }))
+      .successAction((elm: TEntity) => ({ elm }))
+      .successProduce((draft, { elm }) => {
+         draft.current = elm
+      })
+      .baseFailure()
+}
+
+export interface IUserEntity extends IEntity {
+   id: number
+   name: string,
+   age: number
+}
+export interface IUserAreaState {
+   current?: IUserEntity
+}
+
+const userArea = EntityAreaBase.CreateArea({
+   state: {
+      countLoads: 0
+   } as IUserAreaState
+})
+
+const load = StandardLoadEntity("loadUser", userArea)
 

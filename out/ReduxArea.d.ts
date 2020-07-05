@@ -37,7 +37,7 @@ export declare type AreaAction<TBaseState, TAreaState, TAction extends Func, Are
     use: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAction>) => void;
     type: ReturnTypeAction<TAction, AreaActionType>;
 };
-declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAreaFailureAction extends Func, TBaseActionTypeInterceptor extends ActionCreatorInterceptor> {
+export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAreaFailureAction extends Func, TBaseActionTypeInterceptor extends ActionCreatorInterceptor> {
     baseOptions: IAreaBaseOptions<TBaseState, TBaseFailureAction, TBaseActionTypeInterceptor>;
     areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaFailureAction, TBaseActionTypeInterceptor>;
     actions: ReduxAction[];
@@ -3161,8 +3161,9 @@ export interface IAreaOptions<TBaseState, TAreaState, TAreaFailureAction extends
         [tag: string]: TIntercept<TBaseState & TAreaState, ReturnType<TBaseActionTypeInterceptor>>[];
     };
 }
-declare class AreaBase<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends Func> {
+export declare class AreaBase<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends Func> {
     baseOptions: IAreaBaseOptions<TBaseState, TBaseStandardFailure, TBaseActionsIntercept>;
+    areaType: Area<TBaseState, unknown, TBaseStandardFailure, Func, TBaseActionsIntercept>;
     constructor(baseOptions: IAreaBaseOptions<TBaseState, TBaseStandardFailure, TBaseActionsIntercept>);
     CreateArea<TAreaState, TAreaStandardFailure extends Func>(areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaStandardFailure, TBaseActionsIntercept>): Area<TBaseState, TAreaState, TBaseStandardFailure, TAreaStandardFailure, TBaseActionsIntercept>;
 }

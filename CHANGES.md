@@ -1,3 +1,15 @@
+## 0.4.15
+
+(Experimental Feature included in `redux-area@next`)
+
+Add `areaType` to `AreaBase`. This is a dummy area that is used to easily exports an AreaBase Area type.
+
+To use it use `Factory(area: typeof MyAppAreaBase.areaType){...}` and to call methods using this `Factory(area as typeof MyAppAreaBase.areaType)`
+
+## 0.4.14
+
+Add `export` for the `Area` class and the `AreaBase` class to enable creation of factories with typescript.
+
 ## 0.4.13
 
 ### 'clear' added to addFetch
