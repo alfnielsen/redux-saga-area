@@ -110,12 +110,16 @@ export const EntityAreaBase = new AreaBase({
    }),
 })
 
+const StandardLoadEntitySuccess = (draft: typeof EntityAreaBase.areaType.initialState, elm: IEntity) => {
+   draft.current = elm
+}
+
 const StandardLoadEntity = <TEntity extends IEntity>(name: string, area: typeof EntityAreaBase.areaType) => {
    return area.addFetch(name)
       .action((id: number) => ({ id }))
       .successAction((elm: TEntity) => ({ elm }))
       .successProduce((draft, { elm }) => {
-         draft.current = elm
+         StandardLoadEntitySuccess(draft, elm)
       })
       .baseFailure()
 }
@@ -136,4 +140,3 @@ const userArea = EntityAreaBase.CreateArea({
 })
 
 const load = StandardLoadEntity("loadUser", userArea)
-
