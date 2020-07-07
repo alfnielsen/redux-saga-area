@@ -758,6 +758,7 @@ export class AreaBase<
    TBaseActionsIntercept extends Func,
    >{
    areaType: Area<TBaseState, unknown, TBaseStandardFailure, Func, TBaseActionsIntercept>
+   draftType: Draft<TBaseState>
 
    constructor(
       public baseOptions: IAreaBaseOptions<
@@ -767,6 +768,7 @@ export class AreaBase<
       >
    ) {
       this.areaType = this.CreateArea({ state: {} as unknown })
+      this.draftType = this.areaType.initialState as Draft<TBaseState>
    }
    public CreateArea<
       TAreaState,

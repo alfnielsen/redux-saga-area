@@ -461,6 +461,7 @@ class AreaBase {
     constructor(baseOptions) {
         this.baseOptions = baseOptions;
         this.areaType = this.CreateArea({ state: {} });
+        this.draftType = this.areaType.initialState;
     }
     CreateArea(areaOptions) {
         const area = new Area(this.baseOptions, areaOptions);

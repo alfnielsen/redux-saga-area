@@ -1,3 +1,9 @@
+## 0.4.16+0.4.17
+
+(Experimental Feature included in `redux-area@next`)
+
+Add `draftType` to `AreaBase`. This is a dummy draft state that is used to easily use an AreaBase Area draft state in produce helpers/factories.
+
 ## 0.4.15
 
 (Experimental Feature included in `redux-area@next`)

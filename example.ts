@@ -110,7 +110,7 @@ export const EntityAreaBase = new AreaBase({
    }),
 })
 
-const StandardLoadEntitySuccess = (draft: typeof EntityAreaBase.areaType.initialState, elm: IEntity) => {
+const StandardLoadEntitySuccess = (draft: typeof EntityAreaBase.draftType, elm: IEntity) => {
    draft.current = elm
 }
 
@@ -130,7 +130,8 @@ export interface IUserEntity extends IEntity {
    age: number
 }
 export interface IUserAreaState {
-   current?: IUserEntity
+   current?: IUserEntity,
+   countLoads: number
 }
 
 const userArea = EntityAreaBase.CreateArea({
@@ -140,3 +141,81 @@ const userArea = EntityAreaBase.CreateArea({
 })
 
 const load = StandardLoadEntity("loadUser", userArea)
+
+
+
+
+// -------- Entity Search Area Base
+
+export interface ISearchTerms<TEntity, TExtra> {
+   type: TEntity[]
+   extra: TExtra
+}
+
+export interface IEntitySearchAreaBaseState<TEntity> {
+   found: TEntity[]
+   error?: Error
+   errorMessage?: string
+}
+
+export const EntitySearchAreaBase = new AreaBase({
+   baseNamePrefix: "@@App/EntitySearch",
+   addNameSlashes: true,
+   addShortNameSlashes: true,
+   baseState: {
+      found: []
+   } as IEntitySearchAreaBaseState<IEntity>,
+   baseActionsIntercept: () => ({}),
+   baseFailureAction: (error: Error) => ({ error }),
+   baseFailureProducer: ((draft, { error }) => {
+      draft.error = error
+      draft.errorMessage = error.message
+   }),
+})
+
+const StandardEntitySearchAction = <TEntity, TExtra>() => (searchTerms: ISearchTerms<TEntity, TExtra>, reset?: boolean) => ({
+   searchTerms,
+   reset
+})
+
+const StandardEntitySearchProduce = <TEntity, TExtra>() => (draft: typeof EntitySearchAreaBase.draftType, action: { searchTerms: ISearchTerms<TEntity, TExtra>, reset?: boolean }) => {
+   if (action.reset) {
+      draft.found = []
+   }
+}
+const StandardEntitySearchSuccessAction = () => (found: IEntity[]) => ({
+   found
+})
+
+const StandardEntitySearchSuccessProduce = () => (draft: typeof EntitySearchAreaBase.draftType, action: { found: IEntity[] }) => {
+   draft.found = action.found
+}
+
+const StandardEntitySearch = (name: string, area: typeof EntitySearchAreaBase.areaType) => {
+   return area.addFetch(name)
+      .action(StandardEntitySearchAction())
+      .produce(StandardEntitySearchProduce())
+      .successAction(StandardEntitySearchSuccessAction())
+      .successProduce(StandardEntitySearchSuccessProduce())
+      .baseFailure()
+}
+
+
+export interface IUserAreaState extends IEntitySearchAreaBaseState<IUserEntity> {
+
+}
+
+const userSearchArea = EntitySearchAreaBase.CreateArea({
+   state: {
+      found: []
+   } as IUserAreaState
+})
+
+const searchUser = StandardEntitySearch("searchUser", userSearchArea)
+
+export const searchActon = {
+   searchUser: searchUser.request,
+   failure: searchUser.failure,
+   success: searchUser.success,
+   clear: searchUser.clear
+}

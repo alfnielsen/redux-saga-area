@@ -3164,6 +3164,7 @@ export interface IAreaOptions<TBaseState, TAreaState, TAreaFailureAction extends
 export declare class AreaBase<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends Func> {
     baseOptions: IAreaBaseOptions<TBaseState, TBaseStandardFailure, TBaseActionsIntercept>;
     areaType: Area<TBaseState, unknown, TBaseStandardFailure, Func, TBaseActionsIntercept>;
+    draftType: Draft<TBaseState>;
     constructor(baseOptions: IAreaBaseOptions<TBaseState, TBaseStandardFailure, TBaseActionsIntercept>);
     CreateArea<TAreaState, TAreaStandardFailure extends Func>(areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaStandardFailure, TBaseActionsIntercept>): Area<TBaseState, TAreaState, TBaseStandardFailure, TAreaStandardFailure, TBaseActionsIntercept>;
 }
