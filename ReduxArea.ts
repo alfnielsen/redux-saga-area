@@ -770,6 +770,8 @@ export class AreaBase<
       this.areaType = this.CreateArea({ state: {} as unknown })
       this.draftType = this.areaType.initialState as Draft<TBaseState>
    }
+
+
    public CreateArea<
       TAreaState,
       TAreaStandardFailure extends Func,
@@ -786,6 +788,13 @@ export class AreaBase<
          areaOptions
       )
       return area
+   }
+
+   public Create<TAreaState>(name: string, state: TAreaState) {
+      return this.CreateArea({
+         namePrefix: name,
+         state
+      })
    }
 }
 

@@ -3167,6 +3167,7 @@ export declare class AreaBase<TBaseState, TBaseStandardFailure extends Func, TBa
     draftType: Draft<TBaseState>;
     constructor(baseOptions: IAreaBaseOptions<TBaseState, TBaseStandardFailure, TBaseActionsIntercept>);
     CreateArea<TAreaState, TAreaStandardFailure extends Func>(areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaStandardFailure, TBaseActionsIntercept>): Area<TBaseState, TAreaState, TBaseStandardFailure, TAreaStandardFailure, TBaseActionsIntercept>;
+    Create<TAreaState>(name: string, state: TAreaState): Area<TBaseState, TAreaState, TBaseStandardFailure, Func, TBaseActionsIntercept>;
 }
 export interface IFetchAreaBaseState {
     loading: boolean;

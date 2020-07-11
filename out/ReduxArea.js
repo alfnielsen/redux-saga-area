@@ -467,6 +467,12 @@ class AreaBase {
         const area = new Area(this.baseOptions, areaOptions);
         return area;
     }
+    Create(name, state) {
+        return this.CreateArea({
+            namePrefix: name,
+            state
+        });
+    }
 }
 exports.AreaBase = AreaBase;
 exports.SimpleAreaBase = (baseName = "App") => new AreaBase({

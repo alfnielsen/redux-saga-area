@@ -205,10 +205,9 @@ export interface IUserAreaState extends IEntitySearchAreaBaseState<IUserEntity> 
 
 }
 
-const userSearchArea = EntitySearchAreaBase.CreateArea({
-   state: {
-      found: []
-   } as IUserAreaState
+const userSearchArea = EntitySearchAreaBase.Create<IUserAreaState>('userSearch', {
+   found: [] as IUserEntity[],
+   countLoads: 0
 })
 
 const searchUser = StandardEntitySearch("searchUser", userSearchArea)

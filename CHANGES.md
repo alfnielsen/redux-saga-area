@@ -1,3 +1,31 @@
+## 0.4.19
+
+Add `Create` to `AreaBase`.
+
+This is a simple version of `CreteArea` that take only take a `name` (prefixName) and the state object.
+
+```ts
+const areaState: IAreaState = {}
+const area = AppAreaBase.Create<IAreaState>("myarea", {
+  // state props
+})
+```
+
+It is recommended to use this because it provide a better interface test for the state than typescript `as IState`.
+
+It will though not alow custom area options like area failure ect.
+
+If this is needed consider creating the state before the `CreteArea` with out `as`:
+
+```ts
+const areaState: IAreaState = {}
+const area = AppAreaBase.CreateArea({
+   state: areaState,
+   ...
+})
+
+```
+
 ## 0.4.18
 
 Remove Experimental from `draftType` and `areaType`
