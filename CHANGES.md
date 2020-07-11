@@ -1,3 +1,11 @@
+## 0.4.18
+
+Remove Experimental from `draftType` and `areaType`
+
+There now exist a react-redux-area module with React specific functionality.
+
+Links has been added in readme.
+
 ## 0.4.16+0.4.17
 
 (Experimental Feature included in `redux-area@next`)
