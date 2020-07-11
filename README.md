@@ -51,8 +51,8 @@ import { AppAreaBase } from './AppAreaBase'
 // State (Optional)
 export interface IMyAreaState {
    name: string,
-   loading: boolean
-   error?: Error
+   // loading: boolean // <- This is provided from the AreaBase
+   // error?: Error // <- This is provided from the AreaBase
 }
 
 // Create Area
