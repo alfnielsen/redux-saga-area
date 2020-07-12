@@ -33,24 +33,31 @@ See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-are
 
 ## Usage
 
+AppAreaBase.ts
+```ts
+
+import { FetchAreaBase } from 'redux-area'
+const AppAreaBase = FetchAreaBase("MyApp")
+export default AppAreaBase
+
+```
+
 MyArea.ts
 
 ```ts
-import { FetchAreaBase } from 'redux-area'
+
+import { AppAreaBase } from './AppAreaBase'
 
 // State (Optional)
 export interface IMyAreaState {
    name: string,
-   loading: boolean
-   error?: Error
+   // loading: boolean // <- This is provided from the AreaBase
+   // error?: Error // <- This is provided from the AreaBase
 }
 
 // Create Area
-const area = FetchAreaBase("MyApp").CreateArea({
-   namePrefix: 'MyArea',
-   state: {
-     name: ''
-   }
+const area = AppAreaBase.Create<IMyAreaState>('MyArea', {
+   name: ''
 )
 
 // Add single action
