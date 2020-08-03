@@ -1,6 +1,6 @@
 # Redux-saga-area
 
-[Redux-area](https://github.com/alfnielsen/redux-saga) width [redux-saga](https://redux-saga.js.org/)
+[Redux-area](https://github.com/alfnielsen/redux-area) width [redux-saga](https://redux-saga.js.org/)
 
 **Short:** `Simplified strongly typed redux`
 
