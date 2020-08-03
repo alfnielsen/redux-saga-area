@@ -143,4 +143,4 @@ _(editable codesandbox.io)_
 
 Demo: [Demo in React](https://codesandbox.io/s/redux-saga-area-base-ex-071pn)
 
-[![Demo picture](./ExImage.png)](https://codesandbox.io/s/redux-saga-area-base-ex-071pn)
+("@next" Demo - not stable): [Demo in React](https://codesandbox.io/s/redux-saga-area-next-base-ex-wwd17)

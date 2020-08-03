@@ -231,3 +231,8 @@ export const searchActon = {
    success: searchUser.success,
    clear: searchUser.clear
 }
+
+// cross area listen
+area.listen(searchActon.success, function* (action) {
+
+})

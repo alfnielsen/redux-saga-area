@@ -1,3 +1,9 @@
+## 0.0.6 (@next version)
+
+Remove Area/BaseArea specific data from `listener` to enable cross area listening.
+
+This is now not include the ActionInterception from the other Area/BaseArea which might be a problem!
+
 ## 0.0.5 (@next version)
 
 Experiment with easy subscribe (Event handling on saga level)

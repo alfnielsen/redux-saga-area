@@ -3148,7 +3148,7 @@ export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Fun
     /**
      * Experimental
      */
-    listen: <TAction extends Func, TAreaAction extends AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: TAreaAction, saga: TSaga) => void;
+    listen: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: TAreaAction, saga: TSaga) => void;
 }
 export interface IAreaBaseOptions<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends ActionCreatorInterceptor> {
     baseState: TBaseState;

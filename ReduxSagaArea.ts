@@ -798,7 +798,7 @@ export class Area<
     */
    public listen = <
       TAction extends Func,
-      TAreaAction extends AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>,
       TSaga extends FuncGen<TAreaAction>,
       >(
          action: TAreaAction,
