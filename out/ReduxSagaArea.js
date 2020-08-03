@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const immer_1 = require("immer");
+const effects_1 = require("redux-saga/effects");
 class Area {
     constructor(baseOptions, areaOptions) {
         this.baseOptions = baseOptions;
         this.areaOptions = areaOptions;
         this.actions = [];
+        this.sagaRegistrations = [];
         this.produceMethod = (actionName, name, actionTags, action, producer) => {
             let [baseIntercept, areaIntercept] = this.findTagsInterceptors(actionTags);
             const baseActionIntercept = this.baseOptions.baseActionsIntercept;
@@ -351,6 +353,37 @@ class Area {
                 actionName
             };
         };
+        // --------- Saga ---------
+        this.takeLeading = (action, saga) => {
+            if (typeof action === "string") {
+                this.sagaRegistrations.push(effects_1.takeLeading(action, saga));
+            }
+            else {
+                this.sagaRegistrations.push(effects_1.takeLeading(action.request.name, saga));
+            }
+        };
+        this.takeEvery = (action, saga) => {
+            if (typeof action === "string") {
+                this.sagaRegistrations.push(effects_1.takeEvery(action, saga));
+            }
+            else {
+                this.sagaRegistrations.push(effects_1.takeEvery(action.request.name, saga));
+            }
+        };
+        this.takeLatest = (action, saga) => {
+            if (typeof action === "string") {
+                this.sagaRegistrations.push(effects_1.takeLatest(action, saga));
+            }
+            else {
+                this.sagaRegistrations.push(effects_1.takeLatest(action.request.name, saga));
+            }
+        };
+        /**
+         * Experimental
+         */
+        this.listen = (action, saga) => {
+            this.sagaRegistrations.push(effects_1.takeEvery(action.name, saga));
+        };
         this.namePrefix = "";
         if (this.baseOptions.baseNamePrefix) {
             this.namePrefix += this.baseOptions.baseNamePrefix;
@@ -433,6 +466,16 @@ class Area {
             return state;
         };
     }
+    rootSaga() {
+        const allSagas = this.sagaRegistrations;
+        return function* () {
+            yield effects_1.all(allSagas);
+        };
+    }
+    getSagaRegistrations() {
+        const allSagas = this.sagaRegistrations;
+        return allSagas;
+    }
     /**
      * Add a single action. \
      * Optional 'interceptNormal' in options will effect this. \
@@ -446,7 +489,7 @@ class Area {
         return this.createAddChain(name, ["All", "Normal", ...(this.areaOptions.tags || []), ...tags]);
     }
     /**
-     * Add 3 action (Request, success and failure). \
+     * Add 4 action (Request, success, failure and clear). \
      * Optional 'interceptRequest', 'interceptSuccess' and 'interceptFailure' in options will effect this. \
      * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final areaFailure of produceFailure) \
      * @param name
@@ -482,7 +525,7 @@ exports.SimpleAreaBase = (baseName = "App") => new AreaBase({
     baseState: {},
     baseActionsIntercept: ( /*{ actionName }: ActionCreatorInterceptorOptions*/) => ({ /*actionName*/}),
 });
-exports.FetchAreaBase = (baseName = "App") => new AreaBase({
+exports.FetchSagaAreaBase = (baseName = "App") => new AreaBase({
     baseNamePrefix: "@@" + baseName,
     addNameSlashes: true,
     addShortNameSlashes: true,
@@ -526,4 +569,4 @@ exports.FetchAreaBase = (baseName = "App") => new AreaBase({
     }
 });
 exports.default = AreaBase;
-//# sourceMappingURL=ReduxArea.js.map
+//# sourceMappingURL=ReduxSagaArea.js.map

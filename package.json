@@ -1,7 +1,7 @@
 {
-  "name": "redux-area",
-  "version": "0.4.19",
-  "description": "simplified strongly typed redux",
+  "name": "redux-saga-area",
+  "version": "0.0.5",
+  "description": "simplified strongly typed redux (with saga)",
   "keywords": [
     "redux",
     "typescript",
@@ -10,17 +10,20 @@
     "auto generated interface"
   ],
   "publisher": "alfnielsen",
-  "main": "out/ReduxArea.js",
-  "types": "out/ReduxArea.d.ts",
+  "main": "out/ReduxSagaArea.js",
+  "types": "out/ReduxSagaArea.d.ts",
   "scripts": {
     "build": "tsc --declaration"
   },
   "author": "",
   "license": "ISC",
-  "homepage": "https://github.com/alfnielsen/redux-area#readme",
-  "dependencies": {
-    "immer": "^5.3.6",
-    "redux": "^4.0.5",
-    "redux-saga": "^1.1.3"
+  "homepage": "https://github.com/alfnielsen/redux-saga-area#readme",
+  "peerDependencies": {
+    "immer": "^5.x",
+    "redux": "^4.x",
+    "redux-saga": "^1.x"
+  },
+  "devDependencies": {
+    "@types/redux-saga": "^0.10.5"
   }
 }

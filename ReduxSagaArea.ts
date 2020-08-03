@@ -1,7 +1,9 @@
-import { Draft, Immutable, produce } from "immer"
+import { Draft, Immutable, produce } from 'immer'
 import { AnyAction, Reducer } from 'redux'
+import { all, ForkEffect, take, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects'
 
 export type Func = (...args: any) => any
+export type FuncGen<TAction extends Func> = (action: ReturnType<TAction>) => Generator<any, void, unknown>
 export type ReduxAction = ((...args: any) => AnyAction) & { name: string; reducer: Reducer }
 export type AnyActionBase = { type: string }
 export type EmptyActionType<AreaActionType> = { type: string } & AreaActionType
@@ -17,6 +19,8 @@ export type FetchAreaAction<TBaseState, TAreaState, TFetchAction extends Func, T
    failure: AreaAction<TBaseState, TAreaState, TFailureAction, AreaActionType>
    actionName: string
 }
+
+
 export type TIntercept<TState, AreaActionType> = (draft: Draft<TState>, action: EmptyActionType<AreaActionType>) => void
 export type TActionIntercept<TState> = (draft: Draft<TState>, action: ActionCreatorInterceptorOptions) => void
 
@@ -36,6 +40,7 @@ export class Area<
    TBaseActionTypeInterceptor extends ActionCreatorInterceptor
    > {
    actions: ReduxAction[] = []
+   sagaRegistrations: ForkEffect[] = []
    initialState: TBaseState & TAreaState
    namePrefix: string
    normalNamePostfix: string
@@ -151,6 +156,18 @@ export class Area<
       }
    }
 
+   public rootSaga() {
+      const allSagas = this.sagaRegistrations
+      return function* () {
+         yield all(allSagas)
+      }
+   }
+
+   public getSagaRegistrations() {
+      const allSagas = this.sagaRegistrations
+      return allSagas
+   }
+
    /**
     * Add a single action. \
     * Optional 'interceptNormal' in options will effect this. \
@@ -165,7 +182,7 @@ export class Area<
    }
 
    /**
-    * Add 3 action (Request, success and failure). \
+    * Add 4 action (Request, success, failure and clear). \
     * Optional 'interceptRequest', 'interceptSuccess' and 'interceptFailure' in options will effect this. \
     * You can omit any 'action' and/or 'produce' if its not needed. (expect one of the final areaFailure of produceFailure) \
     * @param name
@@ -719,6 +736,77 @@ export class Area<
       } as FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>
    }
 
+
+   // --------- Saga ---------
+
+   public takeLeading = <
+      TFetchRequestAction extends Func,
+      TFetchSuccessAction extends Func,
+      TFetchClearAction extends Func,
+      TFetchFailureAction extends Func,
+      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAction["request"]>,
+      >(
+         action: TAction | string,
+         saga: TSaga
+      ) => {
+      if (typeof action === "string") {
+         this.sagaRegistrations.push(takeLeading(action, saga))
+      } else {
+         this.sagaRegistrations.push(takeLeading(action.request.name, saga))
+      }
+   }
+
+   public takeEvery = <
+      TFetchRequestAction extends Func,
+      TFetchSuccessAction extends Func,
+      TFetchClearAction extends Func,
+      TFetchFailureAction extends Func,
+      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAction["request"]>,
+      >(
+         action: TAction | string,
+         saga: TSaga
+      ) => {
+      if (typeof action === "string") {
+         this.sagaRegistrations.push(takeEvery(action, saga))
+      } else {
+         this.sagaRegistrations.push(takeEvery(action.request.name, saga))
+      }
+   }
+
+   public takeLatest = <
+      TFetchRequestAction extends Func,
+      TFetchSuccessAction extends Func,
+      TFetchClearAction extends Func,
+      TFetchFailureAction extends Func,
+      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAction["request"]>,
+      >(
+         action: TAction,
+         saga: TSaga
+      ) => {
+      if (typeof action === "string") {
+         this.sagaRegistrations.push(takeLatest(action, saga))
+      } else {
+         this.sagaRegistrations.push(takeLatest(action.request.name, saga))
+      }
+   }
+
+   /**
+    * Experimental
+    */
+   public listen = <
+      TAction extends Func,
+      TAreaAction extends AreaAction<TBaseState, TAreaState, TAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAreaAction>,
+      >(
+         action: TAreaAction,
+         saga: TSaga
+      ) => {
+      this.sagaRegistrations.push(takeEvery(action.name, saga))
+   }
+
 }
 
 
@@ -824,7 +912,7 @@ export var SimpleAreaBase = (baseName = "App") => new AreaBase({
 
 
 
-export var FetchAreaBase = (baseName = "App") => new AreaBase({
+export var FetchSagaAreaBase = (baseName = "App") => new AreaBase({
    baseNamePrefix: "@@" + baseName,
    addNameSlashes: true,
    addShortNameSlashes: true,

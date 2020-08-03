@@ -1,4 +1,6 @@
-import AreaBase, { FetchAreaBase } from "./ReduxArea"
+import { call } from 'redux-saga/effects'
+
+import AreaBase, { FetchSagaAreaBase } from "./ReduxSagaArea"
 
 // Optional state interface.
 // You can also get it from (typeof area.initialState)
@@ -8,7 +10,7 @@ export interface IMyAreaState {
    readonly types: string[]
 }
 
-const area = FetchAreaBase("@@MyApp").CreateArea({
+const area = FetchSagaAreaBase("@@MyApp").CreateArea({
    namePrefix: "MyArea",
    state: {
       name: '',
@@ -41,6 +43,7 @@ const clearName = area
       draft.name = undefined
    })
 
+interface IUser { id: number, name: string, userName: string, email: string }
 const getName = area
    .addFetch('getName')
    .action((id: number) => ({ id }))
@@ -54,6 +57,16 @@ const getName = area
       draft.error = error
       // write you own failure for this action
    })
+
+area.takeLatest(getName, function* ({ id }) {
+   const user: IUser = yield call(() =>
+      fetch(`https://jsonplaceholder.typicode.com/users/${id}`)
+         .then(response => response.json())
+         .then(myJson => myJson)
+   )
+   getName.success(user.name)
+})
+
 
 const getAllTypes = area
    .addFetch('getAllTypes')

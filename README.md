@@ -1,4 +1,6 @@
-# Redux-area
+# Redux-saga-area
+
+Redux width saga
 
 **Short:** `Simplified strongly typed redux`
 
@@ -34,12 +36,11 @@ See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-are
 ## Usage
 
 AppAreaBase.ts
-```ts
 
-import { FetchAreaBase } from 'redux-area'
+```ts
+import { FetchAreaBase } from "redux-area"
 const AppAreaBase = FetchAreaBase("MyApp")
 export default AppAreaBase
-
 ```
 
 MyArea.ts
@@ -140,6 +141,6 @@ yarn add redux-area
 
 _(editable codesandbox.io)_
 
-Demo: [Demo in React](https://codesandbox.io/s/redux-area-base-ex-tb1lr?fontsize=14&hidenavigation=1&theme=dark)
+Demo: [Demo in React](https://codesandbox.io/s/redux-saga-area-base-ex-071pn)
 
-[![Demo picture](./ExImage.png)](https://codesandbox.io/s/redux-area-base-ex-tb1lr?fontsize=14&hidenavigation=1&theme=dark)
+[![Demo picture](./ExImage.png)](https://codesandbox.io/s/redux-saga-area-base-ex-071pn)
