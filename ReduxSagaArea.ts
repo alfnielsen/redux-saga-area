@@ -1,6 +1,6 @@
 import { Draft, Immutable, produce } from 'immer'
 import { AnyAction, Reducer } from 'redux'
-import { all, ForkEffect, take, takeEvery, takeLatest, takeLeading } from 'redux-saga/effects'
+import * as SagaEffects from 'redux-saga/effects'
 
 export type Func = (...args: any) => any
 export type FuncGen<TAction extends Func> = (action: ReturnType<TAction>) => Generator<any, void, unknown>
@@ -32,6 +32,56 @@ export type AreaAction<TBaseState, TAreaState, TAction extends Func, AreaActionT
    type: ReturnTypeAction<TAction, AreaActionType>
 }
 
+
+export type ISagaRegistrationType = "takeEvery" | "takeLatest" | "takeLeading"
+export type LegalSagaRegistrationName =
+   | string
+   | { name: string }
+   | { request: { name: string } }
+
+export interface ISagaRegistration {
+   type: ISagaRegistrationType,
+   action: LegalSagaRegistrationName | (() => LegalSagaRegistrationName)
+   saga: FuncGen<any>
+}
+
+
+
+export const getActionNameHelper = (action: LegalSagaRegistrationName | (() => LegalSagaRegistrationName)) => {
+   let nameReg: unknown = (action instanceof Function) ? action() : action
+   if (typeof nameReg === "string") {
+      return nameReg
+   }
+   if ((typeof nameReg !== "object" && !(nameReg instanceof Function))) {
+      return undefined
+   }
+   if (nameReg === null) {
+      return undefined
+   }
+   if (hasOwnProperty(nameReg, "name") && typeof nameReg.name === "string") {
+      return nameReg.name
+   }
+   if (!hasOwnProperty(nameReg, "request")) {
+      return undefined
+   }
+   nameReg = nameReg.request
+   if (typeof nameReg !== "object" && !(nameReg instanceof Function)) {
+      return undefined
+   }
+   if (nameReg === null) {
+      return undefined
+   }
+   if (hasOwnProperty(nameReg, "name") && typeof nameReg.name === "string") {
+      return nameReg.name
+   }
+}
+
+// Hack to to fix Ts missing understanding of unknown.hasOwnProperty()
+function hasOwnProperty<X extends {}, Y extends PropertyKey>
+   (obj: X, prop: Y): obj is X & Record<Y, unknown> {
+   return obj && obj.hasOwnProperty(prop)
+}
+
 export class Area<
    TBaseState,
    TAreaState,
@@ -40,7 +90,7 @@ export class Area<
    TBaseActionTypeInterceptor extends ActionCreatorInterceptor
    > {
    actions: ReduxAction[] = []
-   sagaRegistrations: ForkEffect[] = []
+   sagaRegistrations: ISagaRegistration[] = []
    initialState: TBaseState & TAreaState
    namePrefix: string
    normalNamePostfix: string
@@ -146,7 +196,7 @@ export class Area<
       return this.constructActionName(name, this.clearNamePostfix)
    }
 
-   public rootReducer() {
+   public getRootReducer() {
       return (state: TAreaState = this.initialState, action: AnyAction) => {
          const actionArea = this.actions.find(x => x.name === action.type)
          if (actionArea) {
@@ -156,15 +206,16 @@ export class Area<
       }
    }
 
-   public rootSaga() {
-      const allSagas = this.sagaRegistrations
-      return function* () {
-         yield all(allSagas)
-      }
-   }
-
-   public getSagaRegistrations() {
-      const allSagas = this.sagaRegistrations
+   public getSagas() {
+      const allSagas = this.sagaRegistrations.map(obj => {
+         let actionName = getActionNameHelper(obj.action)
+         if (!actionName) {
+            throw new Error(`A Saga has been registered with no actionName (or action) in ${this.namePrefix}`)
+         } else {
+            const n = actionName
+            return SagaEffects[obj.type](n, obj.saga)
+         }
+      })
       return allSagas
    }
 
@@ -738,75 +789,51 @@ export class Area<
 
 
    // --------- Saga ---------
-
-   public takeLeading = <
-      TFetchRequestAction extends Func,
-      TFetchSuccessAction extends Func,
-      TFetchClearAction extends Func,
-      TFetchFailureAction extends Func,
-      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
-      TSaga extends FuncGen<TAction["request"]>,
-      >(
-         action: TAction | string,
-         saga: TSaga
-      ) => {
-      if (typeof action === "string") {
-         this.sagaRegistrations.push(takeLeading(action, saga))
-      } else {
-         this.sagaRegistrations.push(takeLeading(action.request.name, saga))
-      }
-   }
-
-   public takeEvery = <
-      TFetchRequestAction extends Func,
-      TFetchSuccessAction extends Func,
-      TFetchClearAction extends Func,
-      TFetchFailureAction extends Func,
-      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
-      TSaga extends FuncGen<TAction["request"]>,
-      >(
-         action: TAction | string,
-         saga: TSaga
-      ) => {
-      if (typeof action === "string") {
-         this.sagaRegistrations.push(takeEvery(action, saga))
-      } else {
-         this.sagaRegistrations.push(takeEvery(action.request.name, saga))
-      }
-   }
-
-   public takeLatest = <
-      TFetchRequestAction extends Func,
-      TFetchSuccessAction extends Func,
-      TFetchClearAction extends Func,
-      TFetchFailureAction extends Func,
-      TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>,
-      TSaga extends FuncGen<TAction["request"]>,
-      >(
-         action: TAction,
-         saga: TSaga
-      ) => {
-      if (typeof action === "string") {
-         this.sagaRegistrations.push(takeLatest(action, saga))
-      } else {
-         this.sagaRegistrations.push(takeLatest(action.request.name, saga))
-      }
-   }
-
-   /**
-    * Experimental
-    */
    public listen = <
       TAction extends Func,
       TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>,
       TSaga extends FuncGen<TAreaAction>,
       >(
-         action: TAreaAction,
-         saga: TSaga
+         action: () => TAreaAction,
+         saga: TSaga,
+         listenType: ISagaRegistrationType = 'takeEvery'
       ) => {
-      this.sagaRegistrations.push(takeEvery(action.name, saga))
+      this.sagaRegistrations.push({ type: listenType, action, saga })
    }
 
+
+   public takeLeading = <
+      TAction extends Func,
+      TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAreaAction>,
+      >(
+         action: LegalSagaRegistrationName,
+         saga: TSaga
+      ) => {
+      this.sagaRegistrations.push({ type: 'takeLeading', action, saga })
+   }
+
+   public takeEvery = <
+      TAction extends Func,
+      TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAreaAction>,
+      >(
+         action: LegalSagaRegistrationName,
+         saga: TSaga
+      ) => {
+      this.sagaRegistrations.push({ type: 'takeEvery', action, saga })
+   }
+
+   public takeLatest = <
+      TAction extends Func,
+      TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>,
+      TSaga extends FuncGen<TAreaAction>,
+      >(
+         action: LegalSagaRegistrationName,
+         saga: TSaga
+      ) => {
+      this.sagaRegistrations.push({ type: 'takeLatest', action, saga })
+   }
 }
 
 
@@ -901,61 +928,6 @@ export interface IFetchAreaBaseState {
       }
    },
 }
-
-export var SimpleAreaBase = (baseName = "App") => new AreaBase({
-   baseNamePrefix: "@@" + baseName,
-   addNameSlashes: true,
-   addShortNameSlashes: true,
-   baseState: {},
-   baseActionsIntercept: (/*{ actionName }: ActionCreatorInterceptorOptions*/) => ({/*actionName*/ }), // simple action don't add actionName
-})
-
-
-
-export var FetchSagaAreaBase = (baseName = "App") => new AreaBase({
-   baseNamePrefix: "@@" + baseName,
-   addNameSlashes: true,
-   addShortNameSlashes: true,
-   baseState: {
-      loading: false,
-      loadingMap: {},
-      error: undefined,
-      errorMap: {},
-      errorMessage: ''
-   } as IFetchAreaBaseState,
-   baseFailureAction: (error: Error) => ({ error }),
-   baseFailureProducer: ((draft, { error, actionName }) => {
-      draft.error = error
-      draft.errorMessage = error.message
-      draft.errorMap[actionName] = {
-         error,
-         message: error.message,
-         count: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1,
-         currentCount: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1
-      }
-   }),
-   baseActionsIntercept: ({ actionName }: ActionCreatorInterceptorOptions) => ({
-      actionName
-   }),
-   baseInterceptors: {
-      "Request": [(draft, { actionName }) => {
-         draft.loading = true
-         draft.loadingMap[actionName] = true
-      }],
-      "Success": [(draft, { actionName }) => {
-         draft.loading = false
-         draft.loadingMap[actionName] = false
-         if (draft.errorMap[actionName]) {
-            draft.errorMap[actionName].currentCount = 0
-         }
-      }],
-      "Failure": [(draft, { actionName }) => {
-         draft.loading = false
-         draft.loadingMap[actionName] = false
-      }]
-   }
-})
-
 
 export default AreaBase
 

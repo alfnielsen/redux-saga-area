@@ -1,6 +1,6 @@
 import { Draft, Immutable } from 'immer';
 import { AnyAction, Reducer } from 'redux';
-import { ForkEffect } from 'redux-saga/effects';
+import * as SagaEffects from 'redux-saga/effects';
 export declare type Func = (...args: any) => any;
 export declare type FuncGen<TAction extends Func> = (action: ReturnType<TAction>) => Generator<any, void, unknown>;
 export declare type ReduxAction = ((...args: any) => AnyAction) & {
@@ -39,11 +39,31 @@ export declare type AreaAction<TBaseState, TAreaState, TAction extends Func, Are
     use: (draft: Draft<TBaseState & TAreaState>, action: ReturnType<TAction>) => void;
     type: ReturnTypeAction<TAction, AreaActionType>;
 };
+export declare type ISagaRegistrationType = "takeEvery" | "takeLatest" | "takeLeading";
+export declare type LegalSagaRegistrationName = string | {
+    name: string;
+} | {
+    request: {
+        name: string;
+    };
+};
+export interface ISagaRegistration {
+    type: ISagaRegistrationType;
+    action: LegalSagaRegistrationName | (() => LegalSagaRegistrationName);
+    saga: FuncGen<any>;
+}
+export declare const getActionNameHelper: (action: string | {
+    name: string;
+} | {
+    request: {
+        name: string;
+    };
+} | (() => LegalSagaRegistrationName)) => string | undefined;
 export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Func, TAreaFailureAction extends Func, TBaseActionTypeInterceptor extends ActionCreatorInterceptor> {
     baseOptions: IAreaBaseOptions<TBaseState, TBaseFailureAction, TBaseActionTypeInterceptor>;
     areaOptions: IAreaOptions<TBaseState, TAreaState, TAreaFailureAction, TBaseActionTypeInterceptor>;
     actions: ReduxAction[];
-    sagaRegistrations: ForkEffect[];
+    sagaRegistrations: ISagaRegistration[];
     initialState: TBaseState & TAreaState;
     namePrefix: string;
     normalNamePostfix: string;
@@ -59,9 +79,8 @@ export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Fun
     getSuccessName(name: string): string;
     getFailureName(name: string): string;
     getClearName(name: string): string;
-    rootReducer(): (state: TAreaState | undefined, action: AnyAction) => any;
-    rootSaga(): () => Generator<import("redux-saga/effects").AllEffect<ForkEffect<any>>, void, unknown>;
-    getSagaRegistrations(): ForkEffect<any>[];
+    getRootReducer(): (state: TAreaState | undefined, action: AnyAction) => any;
+    getSagas(): SagaEffects.ForkEffect<never>[];
     /**
      * Add a single action. \
      * Optional 'interceptNormal' in options will effect this. \
@@ -3142,13 +3161,13 @@ export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Fun
     private createClearChain;
     private createFailureChain;
     private finalizeChain;
-    takeLeading: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: string | TAction, saga: TSaga) => void;
-    takeEvery: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: string | TAction, saga: TSaga) => void;
-    takeLatest: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: TAction, saga: TSaga) => void;
+    takeLeading: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
+    takeEvery: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
+    takeLatest: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
     /**
      * Experimental
      */
-    listen: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: TAreaAction, saga: TSaga) => void;
+    listen: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: () => TAreaAction, saga: TSaga, listenType?: ISagaRegistrationType) => void;
 }
 export interface IAreaBaseOptions<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends ActionCreatorInterceptor> {
     baseState: TBaseState;
@@ -3197,10 +3216,4 @@ export interface IFetchAreaBaseState {
         };
     };
 }
-export declare var SimpleAreaBase: (baseName?: string) => AreaBase<{}, Func, () => {}>;
-export declare var FetchSagaAreaBase: (baseName?: string) => AreaBase<IFetchAreaBaseState, (error: Error) => {
-    error: Error;
-}, ({ actionName }: ActionCreatorInterceptorOptions) => {
-    actionName: string;
-}>;
 export default AreaBase;

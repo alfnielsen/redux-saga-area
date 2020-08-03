@@ -1,3 +1,47 @@
+## 0.0.7
+
+### Added
+
+Add `listen` to `area`
+
+First argument of `takeEvery`, `takeLatest` and `takeLeading` now allows you to pass a function that returns an action,
+to avoid ref to un initialized actions (caused to duel module dependency)
+
+The `listen` method is actually same base of the `take...` method and take a third optional type,
+that by default is takeEvery.
+
+When you `listen` to action in other files it's important to use the function `()=>action`
+
+It recommend to use `listen` to indicate that its listen to another area's action.
+
+Used like this: `area.listen(()=>action, saga [, type*] )` // type: 'takeEvery' | 'takeLatest' | 'takeLeading'
+
+Its important to use the `getSagas()` in the Redux Store configuration instead ogf the Area if there are dependencies from other files.
+
+### Breaking Changes
+
+#### Rename method:
+
+`rootReducer()` is now `getRootReducer()`
+
+`getSagaRegistrations()` is now `getSagas()`
+
+#### Removed:
+
+`rootSaga`has been removed!
+
+You can get the same by :
+
+```ts
+function* root() {
+  yield all(area.getSagas())
+}
+```
+
+The AreaBases has been removed, create you own base instead.
+
+> You can alway copy common AreaBases them from the wiki.
+
 ## 0.0.6 (@next version)
 
 Remove Area/BaseArea specific data from `listener` to enable cross area listening.

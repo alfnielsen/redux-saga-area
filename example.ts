@@ -1,6 +1,7 @@
 import { call } from 'redux-saga/effects'
 
-import AreaBase, { FetchSagaAreaBase } from "./ReduxSagaArea"
+import AreaBase from "./ReduxSagaArea"
+import { AppAreaBase } from "./example-areabase"
 
 // Optional state interface.
 // You can also get it from (typeof area.initialState)
@@ -10,7 +11,7 @@ export interface IMyAreaState {
    readonly types: string[]
 }
 
-const area = FetchSagaAreaBase("@@MyApp").CreateArea({
+const area = AppAreaBase.CreateArea({
    namePrefix: "MyArea",
    state: {
       name: '',
@@ -18,6 +19,9 @@ const area = FetchSagaAreaBase("@@MyApp").CreateArea({
       types: []
    } as IMyAreaState
 })
+
+
+
 
 const getAllType = area
    .addFetch('getAllType')
@@ -52,9 +56,18 @@ const getName = area
       draft.name = name
    })
    .failureAction((error: Error) => ({ error }))
-   .failureProduce((draft, { error }) => {
+   .failureProduce((draft, { error, actionName }) => {
       draft.loading = false
-      draft.error = error
+      draft.errorMap[actionName] = {
+         error,
+         message: error.message,
+         count: draft.errorMap[actionName]
+            ? draft.errorMap[actionName].count + 1
+            : 1,
+         currentCount: draft.errorMap[actionName]
+            ? draft.errorMap[actionName].count + 1
+            : 1
+      }
       // write you own failure for this action
    })
 
@@ -94,7 +107,7 @@ export const MyAreaActions = {
 }
 
 export const MyAreaInitState = area.initialState
-export const MyAreaRootReducer = area.rootReducer()
+export const MyAreaRootReducer = area.getRootReducer()
 
 
 // -------- Entity Area Base
@@ -233,6 +246,6 @@ export const searchActon = {
 }
 
 // cross area listen
-area.listen(searchActon.success, function* (action) {
+area.listen(() => searchUser.success, function* (a) {
 
 })

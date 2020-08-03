@@ -1,7 +1,39 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const immer_1 = require("immer");
-const effects_1 = require("redux-saga/effects");
+const SagaEffects = require("redux-saga/effects");
+exports.getActionNameHelper = (action) => {
+    let nameReg = (action instanceof Function) ? action() : action;
+    if (typeof nameReg === "string") {
+        return nameReg;
+    }
+    if ((typeof nameReg !== "object" && !(nameReg instanceof Function))) {
+        return undefined;
+    }
+    if (nameReg === null) {
+        return undefined;
+    }
+    if (hasOwnProperty(nameReg, "name") && typeof nameReg.name === "string") {
+        return nameReg.name;
+    }
+    if (!hasOwnProperty(nameReg, "request")) {
+        return undefined;
+    }
+    nameReg = nameReg.request;
+    if (typeof nameReg !== "object" && !(nameReg instanceof Function)) {
+        return undefined;
+    }
+    if (nameReg === null) {
+        return undefined;
+    }
+    if (hasOwnProperty(nameReg, "name") && typeof nameReg.name === "string") {
+        return nameReg.name;
+    }
+};
+// Hack to to fix Ts missing understanding of unknown.hasOwnProperty()
+function hasOwnProperty(obj, prop) {
+    return obj && obj.hasOwnProperty(prop);
+}
 class Area {
     constructor(baseOptions, areaOptions) {
         this.baseOptions = baseOptions;
@@ -355,34 +387,19 @@ class Area {
         };
         // --------- Saga ---------
         this.takeLeading = (action, saga) => {
-            if (typeof action === "string") {
-                this.sagaRegistrations.push(effects_1.takeLeading(action, saga));
-            }
-            else {
-                this.sagaRegistrations.push(effects_1.takeLeading(action.request.name, saga));
-            }
+            this.sagaRegistrations.push({ type: 'takeLeading', action, saga });
         };
         this.takeEvery = (action, saga) => {
-            if (typeof action === "string") {
-                this.sagaRegistrations.push(effects_1.takeEvery(action, saga));
-            }
-            else {
-                this.sagaRegistrations.push(effects_1.takeEvery(action.request.name, saga));
-            }
+            this.sagaRegistrations.push({ type: 'takeEvery', action, saga });
         };
         this.takeLatest = (action, saga) => {
-            if (typeof action === "string") {
-                this.sagaRegistrations.push(effects_1.takeLatest(action, saga));
-            }
-            else {
-                this.sagaRegistrations.push(effects_1.takeLatest(action.request.name, saga));
-            }
+            this.sagaRegistrations.push({ type: 'takeLatest', action, saga });
         };
         /**
          * Experimental
          */
-        this.listen = (action, saga) => {
-            this.sagaRegistrations.push(effects_1.takeEvery(action.name, saga));
+        this.listen = (action, saga, listenType = 'takeEvery') => {
+            this.sagaRegistrations.push({ type: listenType, action, saga });
         };
         this.namePrefix = "";
         if (this.baseOptions.baseNamePrefix) {
@@ -457,7 +474,7 @@ class Area {
     getClearName(name) {
         return this.constructActionName(name, this.clearNamePostfix);
     }
-    rootReducer() {
+    getRootReducer() {
         return (state = this.initialState, action) => {
             const actionArea = this.actions.find(x => x.name === action.type);
             if (actionArea) {
@@ -466,14 +483,17 @@ class Area {
             return state;
         };
     }
-    rootSaga() {
-        const allSagas = this.sagaRegistrations;
-        return function* () {
-            yield effects_1.all(allSagas);
-        };
-    }
-    getSagaRegistrations() {
-        const allSagas = this.sagaRegistrations;
+    getSagas() {
+        const allSagas = this.sagaRegistrations.map(obj => {
+            let actionName = exports.getActionNameHelper(obj.action);
+            if (!actionName) {
+                throw new Error(`A Saga has been registered with no actionName (or action) in ${this.namePrefix}`);
+            }
+            else {
+                const n = actionName;
+                return SagaEffects[obj.type](n, obj.saga);
+            }
+        });
         return allSagas;
     }
     /**
@@ -518,55 +538,5 @@ class AreaBase {
     }
 }
 exports.AreaBase = AreaBase;
-exports.SimpleAreaBase = (baseName = "App") => new AreaBase({
-    baseNamePrefix: "@@" + baseName,
-    addNameSlashes: true,
-    addShortNameSlashes: true,
-    baseState: {},
-    baseActionsIntercept: ( /*{ actionName }: ActionCreatorInterceptorOptions*/) => ({ /*actionName*/}),
-});
-exports.FetchSagaAreaBase = (baseName = "App") => new AreaBase({
-    baseNamePrefix: "@@" + baseName,
-    addNameSlashes: true,
-    addShortNameSlashes: true,
-    baseState: {
-        loading: false,
-        loadingMap: {},
-        error: undefined,
-        errorMap: {},
-        errorMessage: ''
-    },
-    baseFailureAction: (error) => ({ error }),
-    baseFailureProducer: ((draft, { error, actionName }) => {
-        draft.error = error;
-        draft.errorMessage = error.message;
-        draft.errorMap[actionName] = {
-            error,
-            message: error.message,
-            count: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1,
-            currentCount: draft.errorMap[actionName] ? draft.errorMap[actionName].count + 1 : 1
-        };
-    }),
-    baseActionsIntercept: ({ actionName }) => ({
-        actionName
-    }),
-    baseInterceptors: {
-        "Request": [(draft, { actionName }) => {
-                draft.loading = true;
-                draft.loadingMap[actionName] = true;
-            }],
-        "Success": [(draft, { actionName }) => {
-                draft.loading = false;
-                draft.loadingMap[actionName] = false;
-                if (draft.errorMap[actionName]) {
-                    draft.errorMap[actionName].currentCount = 0;
-                }
-            }],
-        "Failure": [(draft, { actionName }) => {
-                draft.loading = false;
-                draft.loadingMap[actionName] = false;
-            }]
-    }
-});
 exports.default = AreaBase;
 //# sourceMappingURL=ReduxSagaArea.js.map
