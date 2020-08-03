@@ -1,6 +1,6 @@
 # Redux-saga-area
 
-Redux width saga
+Redux-area width saga
 
 **Short:** `Simplified strongly typed redux`
 
@@ -27,11 +27,13 @@ See codesandbox [Demo in React](https://codesandbox.io/s/redux-area-base-ex-tb1l
 
 See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki) (The wiki includes all new options, new features and a guide for upgrading from v0.2.x to v0.4.x)
 
-**react-redux-area** is a nother module the add React specific functionality to redux-area:
+**redux-area** Original version (without saga's)
+
+[react-area on npmjs](https://www.npmjs.com/package/react-area)
+
+**react-redux-area** is another module the add React specific functionality to redux-area:
 
 [react-redux-area on npmjs](https://www.npmjs.com/package/react-redux-area)
-
-[react-redux-area github](github.com/alfnielsen/react-redux-area)
 
 ## Usage
 
