@@ -1,6 +1,6 @@
 # Redux-saga-area
 
-Redux-area width saga
+[Redux-area](https://github.com/alfnielsen/redux-saga) width [redux-saga](https://redux-saga.js.org/)
 
 **Short:** `Simplified strongly typed redux`
 
@@ -21,30 +21,41 @@ Redux-area uses the [immer](https://github.com/immerjs/immer) npm module for kee
 
 > You can create normal reducers if you need them
 
-Github [Source Code](https://github.com/alfnielsen/redux-area) (The npm [package](https://www.npmjs.com/package/redux-area))
+Github [Source Code](https://github.com/alfnielsen/redux-saga-area) (The npm [package](https://www.npmjs.com/package/redux-saga-area))
 
-See codesandbox [Demo in React](https://codesandbox.io/s/redux-area-base-ex-tb1lr?fontsize=14&hidenavigation=1&theme=dark)
+See codesandbox [Demo in React](https://codesandbox.io/s/redux-saga-area-base-ex-071pn)
 
-See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-area/wiki) (The wiki includes all new options, new features and a guide for upgrading from v0.2.x to v0.4.x)
+See Github Wiki for full [Documentation](https://github.com/alfnielsen/redux-saga-area/wiki)
 
-**redux-area** Original version (without saga's)
 
-[react-area on npmjs](https://www.npmjs.com/package/react-area)
+**redux-area** 
 
-**react-redux-area** is another module the add React specific functionality to redux-area:
+[react-area](https://www.npmjs.com/package/react-area)
 
-[react-redux-area on npmjs](https://www.npmjs.com/package/react-redux-area)
+**react-redux-area** 
+
+Another module that adds [React](https://reactjs.org/) specific functionality to redux-area.
+
+[react-redux-area](https://www.npmjs.com/package/react-redux-area)
 
 ## Install
 
 ```sh
-npm install redux-area
+npm install redux-saga-area
 ```
 
 Or
 
 ```sh
-yarn add redux-area
+yarn add redux-saga-area
+```
+
+You need also to have install: "immer": "^5.x", "redux": "^4.x", "redux-saga": "^1.x"
+
+Full install
+
+```sh
+yarn add immer redux redux-saga redux-saga-area
 ```
 
 ## Demo
