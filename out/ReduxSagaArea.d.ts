@@ -3161,13 +3161,10 @@ export declare class Area<TBaseState, TAreaState, TBaseFailureAction extends Fun
     private createClearChain;
     private createFailureChain;
     private finalizeChain;
-    takeLeading: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
-    takeEvery: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
-    takeLatest: <TFetchRequestAction extends Func, TFetchSuccessAction extends Func, TFetchClearAction extends Func, TFetchFailureAction extends Func, TAction extends FetchAreaAction<TBaseState, TAreaState, TFetchRequestAction, TFetchSuccessAction, TFetchClearAction, TFetchFailureAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAction["request"]>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
-    /**
-     * Experimental
-     */
     listen: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: () => TAreaAction, saga: TSaga, listenType?: ISagaRegistrationType) => void;
+    takeLeading: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
+    takeEvery: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
+    takeLatest: <TAction extends Func, TAreaAction extends AreaAction<any, any, TAction, ReturnType<TBaseActionTypeInterceptor>>, TSaga extends FuncGen<TAreaAction>>(action: LegalSagaRegistrationName, saga: TSaga) => void;
 }
 export interface IAreaBaseOptions<TBaseState, TBaseStandardFailure extends Func, TBaseActionsIntercept extends ActionCreatorInterceptor> {
     baseState: TBaseState;

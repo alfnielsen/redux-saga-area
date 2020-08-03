@@ -386,6 +386,9 @@ class Area {
             };
         };
         // --------- Saga ---------
+        this.listen = (action, saga, listenType = 'takeEvery') => {
+            this.sagaRegistrations.push({ type: listenType, action, saga });
+        };
         this.takeLeading = (action, saga) => {
             this.sagaRegistrations.push({ type: 'takeLeading', action, saga });
         };
@@ -394,12 +397,6 @@ class Area {
         };
         this.takeLatest = (action, saga) => {
             this.sagaRegistrations.push({ type: 'takeLatest', action, saga });
-        };
-        /**
-         * Experimental
-         */
-        this.listen = (action, saga, listenType = 'takeEvery') => {
-            this.sagaRegistrations.push({ type: listenType, action, saga });
         };
         this.namePrefix = "";
         if (this.baseOptions.baseNamePrefix) {
